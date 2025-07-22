@@ -216,10 +216,6 @@ Bluetooth Low Energy 연결을 관리하는 클래스입니다.
 - Android 14.0 (API 34) 이상의 실제 디바이스
 - Bluetooth 기능 지원 디바이스
 
-## 라이선스
+---
 
-이 SDK는 LooxidLabs의 소유입니다.
-
-## 지원
-
-기술 지원이나 문의사항이 있으시면 LooxidLabs에 연락해 주세요.
+Copyright ⓒ 룩시드랩스 All rights reserved.
