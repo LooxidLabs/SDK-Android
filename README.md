@@ -135,6 +135,15 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 </provider>
 ```
 
+### file_paths.xml 설정
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <external-files-path name="external_files" path="." />
+</paths> 
+```
+
 ### 기본 사용법
 
 ```kotlin
