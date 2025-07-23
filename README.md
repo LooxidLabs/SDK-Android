@@ -137,10 +137,10 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 
 ### file_paths.xml 생성 및 설정
 
-#### 아래 경로에 안에 file_paths.xml 생성:
+#### 하단에 나와있는 경로 안에 file_paths.xml 생성:
 > ***../app/src/main/res/xml***
 
-#### 하단의 설정 복사 후 붙여넣기:
+#### file_paths.xml파일에 하단의 설정 복사 후 붙여넣기:
 
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
