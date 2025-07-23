@@ -141,6 +141,7 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-files-path name="external_files" path="." />
+    <external-path name="downloads" path="Download/" />
 </paths> 
 ```
 
