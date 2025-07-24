@@ -1598,21 +1598,6 @@ timeBatchManager.clearBuffer()
 val bufferSize = timeBatchManager.getBufferSize()
 ```
 
-### 센서 설정 관리
-
-#### SensorConfiguration 사용
-```kotlin
-// 기본 설정 사용
-val config = SensorConfiguration.default
-
-// 커스텀 설정 생성
-val customConfig = SensorConfiguration(
-    eegSampleRate = 250.0,
-    ppgSampleRate = 50.0,
-    accelerometerSampleRate = 25.0
-)
-```
-
 ### 가속도계 모드 설정
 
 #### 가속도계 모드 선택
