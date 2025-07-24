@@ -181,7 +181,7 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 
 2. **파일 위치 변경**:
    - 파일들을 적절한 패키지 구조에 맞게 이동해야 합니다
-   - 하단의 경로에 MainViewModel.kt 와 LinkBand-App.kt 추가  
+   - 하단의 경로에 **MainViewModel.kt** 와 **LinkBand-App.kt** 추가  
 
 > ***../yourProjectName/app/src/main/java/com/example/yourProjectName/ui***
 
