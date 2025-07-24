@@ -1485,6 +1485,225 @@ bleManager.stopRecording()
 val isRecording: StateFlow<Boolean>
 ```
 
+## 🔧 고급 설정
+
+### 배치 데이터 수집
+
+#### 기본 함수들
+```kotlin
+// 수집 모드 설정 (샘플 수, 초, 분)
+bleManager.setCollectionMode(mode: CollectionMode)
+
+// 센서별 샘플 수 설정
+bleManager.updateSensorSampleCount(sensorType: SensorType, sampleCount: Int, sampleCountText: String)
+
+// 센서별 초 단위 설정
+bleManager.updateSensorSeconds(sensorType: SensorType, seconds: Int, secondsText: String)
+
+// 센서별 분 단위 설정
+bleManager.updateSensorMinutes(sensorType: SensorType, minutes: Int, minutesText: String)
+
+// 센서 설정 가져오기
+bleManager.getSensorConfiguration(sensorType: SensorType): SensorBatchConfiguration?
+
+// 배치 데이터 StateFlow들
+val eegBatchData: StateFlow<List<EegData>>
+val ppgBatchData: StateFlow<List<PpgData>>
+val accBatchData: StateFlow<List<AccData>>
+```
+
+#### 관련 데이터 클래스들
+```kotlin
+// 수집 모드 enum
+enum class CollectionMode {
+    SAMPLE_COUNT,  // 샘플 수 기반
+    SECONDS,       // 초 단위
+    MINUTES        // 분 단위
+}
+
+// 센서 배치 설정 데이터 클래스
+data class SensorBatchConfiguration(
+    var sampleCount: Int,      // 샘플 수 (1-100000)
+    var seconds: Int,          // 초 단위 (1-3600)
+    var minutes: Int,          // 분 단위 (1-60)
+    var sampleCountText: String,
+    var secondsText: String,
+    var minutesText: String
+)
+```
+
+#### 수집 모드 설정
+```kotlin
+// 수집 모드 변경
+bleManager.setCollectionMode(CollectionMode.SAMPLE_COUNT)  // 샘플 수 기반
+bleManager.setCollectionMode(CollectionMode.SECONDS)       // 초 단위
+bleManager.setCollectionMode(CollectionMode.MINUTES)       // 분 단위
+```
+
+#### 센서별 배치 설정
+```kotlin
+// 샘플 수 기반 배치 설정
+bleManager.updateSensorSampleCount(SensorType.EEG, sampleCount, sampleCountText)
+
+// 시간 기반 배치 설정 (초 단위)
+bleManager.updateSensorSeconds(SensorType.PPG, seconds, secondsText)
+
+// 시간 기반 배치 설정 (분 단위)
+bleManager.updateSensorMinutes(SensorType.ACC, minutes, minutesText)
+
+// 현재 센서 설정 조회
+val config = bleManager.getSensorConfiguration(SensorType.EEG)
+```
+
+#### 배치 데이터 수신
+```kotlin
+// 배치 데이터 StateFlow 수신
+bleManager.eegBatchData.collect { batch ->
+    // EEG 배치 데이터 처리
+}
+
+bleManager.ppgBatchData.collect { batch ->
+    // PPG 배치 데이터 처리
+}
+
+bleManager.accBatchData.collect { batch ->
+    // ACC 배치 데이터 처리
+}
+```
+
+### TimeBatchManager 사용법
+
+#### 시간 기반 배치 관리자 생성
+```kotlin
+// 제네릭 타입으로 다양한 센서 데이터 지원
+val eegBatchManager = TimeBatchManager<EegData>(
+    targetIntervalMs = 1000L,  // 1초 간격
+    timestampExtractor = { it.timestamp }
+)
+```
+
+#### 배치 데이터 처리
+```kotlin
+// 샘플 추가 및 배치 완성 확인
+val batch = timeBatchManager.addSample(sample)
+if (batch != null) {
+    // 배치가 완성됨 - 처리 로직
+}
+
+// 수집 중지 시 마지막 배치 반환
+val finalBatch = timeBatchManager.flushBuffer()
+
+// 버퍼 관리
+timeBatchManager.clearBuffer()
+val bufferSize = timeBatchManager.getBufferSize()
+```
+
+### 센서 설정 관리
+
+#### SensorConfiguration 사용
+```kotlin
+// 기본 설정 사용
+val config = SensorConfiguration.default
+
+// 커스텀 설정 생성
+val customConfig = SensorConfiguration(
+    eegSampleRate = 250.0,
+    ppgSampleRate = 50.0,
+    accelerometerSampleRate = 25.0
+)
+```
+
+### 가속도계 모드 설정
+
+#### 가속도계 모드 선택
+```kotlin
+enum class AccelerometerMode {
+    RAW,    // 원시 가속도 값 (중력 포함)
+    MOTION  // 선형 가속도 값 (중력 제거)
+}
+
+// 처리된 가속도계 데이터
+data class ProcessedAccData(
+    val timestamp: Date,
+    val x: Short,
+    val y: Short,
+    val z: Short,
+    val mode: AccelerometerMode
+)
+```
+
+### 데이터 수집 설정
+
+#### DataCollectionConfig 사용
+```kotlin
+// 샘플 수 기반 설정
+val sampleConfig = DataCollectionConfig(
+    sensorType = SensorType.EEG,
+    mode = DataCollectionConfig.DataCollectionMode.SampleCount(250)
+)
+
+// 시간 기반 설정
+val timeConfig = DataCollectionConfig(
+    sensorType = SensorType.PPG,
+    mode = DataCollectionConfig.DataCollectionMode.TimeInterval(5000L) // 5초
+)
+```
+
+### 사용 예시
+
+#### 기본 배치 수집
+```kotlin
+// 1. 수집 모드 설정
+bleManager.setCollectionMode(CollectionMode.SAMPLE_COUNT)
+
+// 2. 센서 설정
+bleManager.updateSensorSampleCount(SensorType.EEG, 250, "250")
+
+// 3. 센서 활성화
+bleManager.selectSensor(SensorType.EEG)
+bleManager.startSelectedSensors()
+
+// 4. 배치 데이터 수신
+bleManager.eegBatchData.collect { batch ->
+    // 배치 데이터 처리
+}
+```
+
+#### 시간 기반 배치 수집
+```kotlin
+// 1. 시간 기반 모드 설정
+bleManager.setCollectionMode(CollectionMode.SECONDS)
+
+// 2. 시간 간격 설정
+bleManager.updateSensorSeconds(SensorType.PPG, 5, "5")
+
+// 3. 센서 활성화
+bleManager.selectSensor(SensorType.PPG)
+bleManager.startSelectedSensors()
+
+// 4. 배치 데이터 수신
+bleManager.ppgBatchData.collect { batch ->
+    // 배치 데이터 처리
+}
+```
+
+#### TimeBatchManager 직접 사용
+```kotlin
+// 커스텀 배치 관리자 생성
+val customBatchManager = TimeBatchManager<EegData>(
+    targetIntervalMs = 2000L,  // 2초 간격
+    timestampExtractor = { it.timestamp }
+)
+
+// 데이터 처리
+eegData.forEach { data ->
+    customBatchManager.addSample(data)?.let { batch ->
+        // 배치 완성 시 처리
+        processBatch(batch)
+    }
+}
+```
+
 ## 요구사항
 
 - Android Studio Arctic Fox 이상
