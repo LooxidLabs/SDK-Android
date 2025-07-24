@@ -63,7 +63,7 @@ Android-LinkBandSDK/
 
 프로젝트 생성:
 
-New Project -> Empty activity
+> New Project -> Empty activity
 
 설정:
 
@@ -72,6 +72,8 @@ New Project -> Empty activity
 > Build configuration language -> Kotlin DSL (build.gradle.kts) [Recommended]
 
 ### gradle.properties 설정
+
+**목적**: Java 17 환경 설정 및 SDK 메타데이터 정의
 
 기본 파일에 아래 코드 추가:
 
@@ -86,6 +88,8 @@ sdkVersion = 1.0.0
 ```
 
 ### build.gradle.kts 의존성 추가
+
+**목적**: Jetpack Compose, 권한 관리, 코루틴, LinkBand SDK 라이브러리 추가
 
 app 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
@@ -109,6 +113,8 @@ dependencies {
 ```
 
 ### AndroidManifest.xml 권한 설정
+
+**목적**: 블루투스 통신, 위치 접근, 파일 저장을 위한 필수 권한 및 FileProvider 설정
 
 AndroidManifest.xml에 다음 권한을 추가하세요:
 
@@ -149,6 +155,8 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 
 ### file_paths.xml 생성 및 설정
 
+**목적**: FileProvider를 통한 안전한 파일 공유 경로 정의
+
 #### 하단의 경로에 file_paths.xml 생성:
 > ***../yourProjectName/app/src/main/res/xml***
 
@@ -174,8 +182,8 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 2. **파일 위치 변경**:
    - 파일들을 적절한 패키지 구조에 맞게 이동해야 합니다
    - 하단의 경로에 MainViewModel.kt 와 LinkBand-App.kt 추가  
-   
-> ***../yourProjectName/app/src/main/java/com/example/demoappseparatefun/ui***
+
+> ***../yourProjectName/app/src/main/java/com/example/yourProjectName/ui***
 
 ### 1. MainActivity.kt
 **역할**: 앱의 진입점, 권한 관리, 화면 전환
