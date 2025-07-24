@@ -179,10 +179,10 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 1. **패키지명 및 import 경로 수정**: 
    - 모든 파일의 package 선언과 import 문을 수정해야 합니다
 
-2. **파일 위치 변경**:
-   - 파일들을 적절한 패키지 구조에 맞게 이동해야 합니다
-   - 하단의 경로에 **MainViewModel.kt** 와 **LinkBand-App.kt** 추가  
-
+2. **파일 위치 지정**:
+   - 파일들을 적절한 패키지 구조에 맞게 생성해야 합니다
+   - 하단의 경로에 **MainViewModel.kt** 와 **LinkBand-App.kt** 생성  
+   
 > ***../yourProjectName/app/src/main/java/com/example/yourProjectName/ui***
 
 ### 1. MainActivity.kt
