@@ -59,6 +59,18 @@ Android-LinkBandSDK/
 
 ## 설치 및 사용
 
+### 안드로이드 스튜디오 프로젝트 생성
+
+프로젝트 생성:
+
+New Project -> Empty activity
+
+설정:
+
+> Minimum SDK -> API 34 ("UpsideDownCake"; Android 14.0)  
+
+> Build configuration language -> Kotlin DSL (build.gradle.kts) [Recommended]
+
 ### gradle.properties 설정
 
 기본 파일에 아래 코드 추가:
@@ -73,7 +85,7 @@ sdkArtifactId = SDK-Android
 sdkVersion = 1.0.0
 ```
 
-### 의존성 추가
+### build.gradle.kts 의존성 추가
 
 app 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
@@ -96,7 +108,7 @@ dependencies {
 }
 ```
 
-### 권한 설정
+### AndroidManifest.xml 권한 설정
 
 AndroidManifest.xml에 다음 권한을 추가하세요:
 
@@ -137,8 +149,8 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 
 ### file_paths.xml 생성 및 설정
 
-#### 하단에 나와있는 경로 안에 file_paths.xml 생성:
-> ***../app/src/main/res/xml***
+#### 하단의 경로에 file_paths.xml 생성:
+> ***../yourProjectName/app/src/main/res/xml***
 
 #### file_paths.xml파일에 하단의 설정 복사 후 붙여넣기:
 
@@ -152,6 +164,19 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 
 ## 📄 샘플 코드 파일
 
+### ⚠️ 주의사항
+
+샘플 코드를 사용할 때는 다음 사항을 확인해주세요:
+
+1. **패키지명 및 import 경로 수정**: 
+   - 모든 파일의 package 선언과 import 문을 수정해야 합니다
+
+2. **파일 위치 변경**:
+   - 파일들을 적절한 패키지 구조에 맞게 이동해야 합니다
+   - 하단의 경로에 MainViewModel.kt 와 LinkBand-App.kt 추가  
+   
+> ***../yourProjectName/app/src/main/java/com/example/demoappseparatefun/ui***
+
 ### 1. MainActivity.kt
 **역할**: 앱의 진입점, 권한 관리, 화면 전환
 
@@ -160,7 +185,7 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 - 스캐너 화면 ↔ 데이터 화면 전환
 - MainViewModel 인스턴스 관리
 
-**샘플 코드(주석 포함)**:
+**샘플 코드**:
 ```kotlin
 /**
  * MainActivity.kt - 기능별 독립 샘플 메인 액티비티
@@ -175,7 +200,7 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
  * - MainViewModel 인스턴스 관리
  * - 권한이 없는 경우 권한 요청 UI 표시
  */
-package com.example.demoappseparatefun
+package com.example.yourProjectName
 
 import android.Manifest
 import android.os.Build
@@ -194,8 +219,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.example.demoappseparatefun.ui.*
-import com.example.demoappseparatefun.ui.MainViewModel
+import com.example.yourProjectName.ui.*
+import com.example.yourProjectName.ui.MainViewModel
 
 /**
  * 메인 액티비티
@@ -328,7 +353,7 @@ class MainActivity : ComponentActivity() {
 - CSV 기록 제어
 - UI 상태 제공
 
-**샘플 코드(주석 포함)**:
+**샘플 코드**:
 ```kotlin
 /**
  * MainViewModel.kt - 기능별 독립 샘플 메인 ViewModel
@@ -343,7 +368,7 @@ class MainActivity : ComponentActivity() {
  * - 자동 재연결 기능
  * - 연결 상태 및 데이터 상태 모니터링
  */
-package com.example.demoappseparatefun.ui
+package com.example.yourProjectName.ui
 
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -690,7 +715,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
  * - SensorDataCard: 센서 데이터 표시 카드 컴포넌트
  * - ReceivingIndicator: 데이터 수신 상태 표시 컴포넌트
  */
-package com.example.demoappseparatefun.ui
+package com.example.yourProjectName.ui
 
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.*
@@ -703,7 +728,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import com.example.linkbandsdk.*
-import com.example.demoappseparatefun.ui.MainViewModel
+import com.example.yourProjectName.ui.MainViewModel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import android.util.Log
