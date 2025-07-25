@@ -179,7 +179,9 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
 샘플 코드를 사용할 때는 다음 사항을 확인해주세요:
 
 1. **패키지명 및 import 경로 수정**: 
-   - 모든 파일의 package 선언과 import 문을 수정해야 합니다
+   - 모든 파일의 package 선언과 import 문에 있는 경로는 샘플 기준(com.example.yourProjectName)으로 되어 있으므로, 실제 프로젝트명에 맞게 변경해야 정상적으로 빌드됩니다.
+
+   - 예를 들어, 프로젝트명이 happyProject이라면 com.example.yourProjectName → com.example.happyProject으로 수정해야 합니다.
 
 2. **파일 위치 지정**:
    - 파일들을 적절한 패키지 구조에 맞게 생성해야 합니다
