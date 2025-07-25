@@ -71,18 +71,39 @@ Android-LinkBandSDK/
 
 > Build configuration language -> Kotlin DSL (build.gradle.kts) [Recommended]
 
-### Java 17 다운로드
-
-```bash
-brew install openjdk@17
-```
-
 ### gradle.properties 설정
 
 **목적**: Java 17 환경 설정 및 SDK 메타데이터 정의
 
-> 기본 파일에 아래 코드 추가:
+#### JDK 17 설치 및 설정
 
+1. **JDK 17 설치** (macOS 기준)
+   ```bash
+   # Homebrew를 사용한 설치
+   brew install openjdk@17
+   ```
+
+2. **Java Home 위치 확인**
+   ```bash
+   # Java 17 설치 경로 확인
+   /usr/libexec/java_home -v 17
+   ```
+
+3. **gradle.properties 파일 업데이트**
+   > 위 명령어로 확인된 경로를 사용하여 gradle.properties 파일을 업데이트하세요:
+
+```properties
+# Java 17 for Android Gradle Plugin
+# 사용자마다 다른 java.home 위치를 확인하고 업데이트
+org.gradle.java.home=/usr/libexec/java_home -v 17 명령어로 확인된 경로
+
+# LinkBand SDK settings
+sdkGroupId = io.github.looxidlabs
+sdkArtifactId = SDK-Android
+sdkVersion = 1.0.0
+```
+
+**예시** (Homebrew 설치 시):
 ```properties
 # Java 17 for Android Gradle Plugin
 org.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
