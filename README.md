@@ -61,11 +61,11 @@ Android-LinkBandSDK/
 
 ### 안드로이드 스튜디오 프로젝트 생성
 
-프로젝트 생성:
+**프로젝트 생성:**
 
 > New Project -> Empty activity
 
-설정:
+**설정:**
 
 > Minimum SDK -> API 34 ("UpsideDownCake"; Android 14.0)  
 
@@ -81,7 +81,7 @@ brew install openjdk@17
 
 **목적**: Java 17 환경 설정 및 SDK 메타데이터 정의
 
-기본 파일에 아래 코드 추가:
+> 기본 파일에 아래 코드 추가:
 
 ```properties
 # Java 17 for Android Gradle Plugin
@@ -97,7 +97,7 @@ sdkVersion = 1.0.0
 
 **목적**: Jetpack Compose, 권한 관리, 코루틴, LinkBand SDK 라이브러리 추가
 
-**app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
+> **app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
 ```gradle
 dependencies {
