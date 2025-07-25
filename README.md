@@ -57,7 +57,7 @@ Android-LinkBandSDK/
 └── proguard-rules.pro           # ProGuard 규칙
 ```
 ---
-## 설치 및 사용
+## 🔧 설치 및 사용
 
 ### 안드로이드 스튜디오 프로젝트 생성
 
@@ -1397,8 +1397,8 @@ fun ReceivingIndicator() {
     )
 } 
 ```
-
-## 🔧 LinkBand SDK 함수 설명
+---
+## LinkBand SDK 함수 설명
 
 ### BleManager 클래스
 
