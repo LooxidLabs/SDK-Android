@@ -122,8 +122,6 @@ dependencies {
 
 **목적**: 블루투스 통신, 위치 접근, 파일 저장을 위한 필수 권한 및 FileProvider 설정
 
-AndroidManifest.xml에 다음 권한을 추가하세요:
-
 `<manifest>` 태그 안에 다음 권한을 추가하세요:
 
 ```xml
