@@ -56,7 +56,7 @@ Android-LinkBandSDK/
 ├── consumer-rules.pro           # ProGuard 규칙
 └── proguard-rules.pro           # ProGuard 규칙
 ```
-
+---
 ## 설치 및 사용
 
 ### 안드로이드 스튜디오 프로젝트 생성
@@ -171,7 +171,7 @@ AndroidManifest.xml에 다음 권한을 추가하세요:
     <external-path name="downloads" path="Download/" />
 </paths> 
 ```
-
+---
 ## 📄 샘플 코드 파일
 
 ### ⚠️ 주의사항
