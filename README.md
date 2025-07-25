@@ -90,7 +90,7 @@ Android-LinkBandSDK/
    ```
 
 3. **gradle.properties 파일 업데이트**
-   > 위 명령어로 확인된 경로를 사용하여 gradle.properties 파일을 업데이트하세요:
+   > 위 명령어로 확인된 경로를 사용하여 기본 파일에 아래 코드 추가:
 
 ```properties
 # Java 17 for Android Gradle Plugin
