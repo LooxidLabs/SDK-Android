@@ -91,7 +91,7 @@ sdkVersion = 1.0.0
 
 **목적**: Jetpack Compose, 권한 관리, 코루틴, LinkBand SDK 라이브러리 추가
 
-app 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
+**app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
 ```gradle
 dependencies {
