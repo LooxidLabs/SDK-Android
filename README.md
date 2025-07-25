@@ -71,6 +71,12 @@ Android-LinkBandSDK/
 
 > Build configuration language -> Kotlin DSL (build.gradle.kts) [Recommended]
 
+### Java 17 다운로드
+
+```bash
+brew install openjdk@17
+```
+
 ### gradle.properties 설정
 
 **목적**: Java 17 환경 설정 및 SDK 메타데이터 정의
