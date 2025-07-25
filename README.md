@@ -118,6 +118,8 @@ dependencies {
 
 AndroidManifest.xml에 다음 권한을 추가하세요:
 
+`<manifest>` 태그 안에 다음 권한을 추가하세요:
+
 ```xml
 <!-- BLE 권한 -->
 <uses-permission android:name="android.permission.BLUETOOTH" />
