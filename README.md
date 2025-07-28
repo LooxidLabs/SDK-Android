@@ -90,7 +90,11 @@ Android-LinkBandSDK/
    ```
 
 3. **gradle.properties 파일 업데이트**
-   > 위 명령어로 확인된 경로를 사용하여 기본 파일에 아래 코드 추가:
+   > 위 명령어로 확인된 경로를 사용하여 기본 파일에 아래 코드 추가  
+
+   > ⚠️ **주의사항** : sdkVersion은 반드시 최신 버전으로 적용해야 합니다.  
+   최신 버전은 아래 링크에서 확인할 수 있습니다.  
+   🔗 https://central.sonatype.com/search?q=io.github.looxidlabs 
 
 ```properties
 # Java 17 for Android Gradle Plugin
@@ -100,7 +104,7 @@ org.gradle.java.home=/usr/libexec/java_home -v 17 명령어로 확인된 경로
 # LinkBand SDK settings
 sdkGroupId = io.github.looxidlabs
 sdkArtifactId = SDK-Android
-sdkVersion = 1.0.0
+sdkVersion = 1.0.1
 ```
 
 **예시** (Homebrew 설치 시):
@@ -111,7 +115,7 @@ org.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/H
 # LinkBand SDK settings
 sdkGroupId = io.github.looxidlabs
 sdkArtifactId = SDK-Android
-sdkVersion = 1.0.0
+sdkVersion = 1.0.1
 ```
 
 ### build.gradle.kts 의존성 추가
@@ -119,6 +123,8 @@ sdkVersion = 1.0.0
 **목적**: Jetpack Compose, 권한 관리, 코루틴, LinkBand SDK 라이브러리 추가
 
 > **app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
+
+> ⚠️ **주의사항** : gradle.properties 설정과 마찬가지로 최신 버전의 SDK를 적용해야 합니다. 
 
 ```gradle
 dependencies {
@@ -135,7 +141,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     
     // LinkBand SDK from Maven Central
-    implementation("io.github.jackorea:linkband-sdk:1.0.0")
+    implementation("io.github.looxidlabs:SDK-Android:1.0.1") 
 }
 ```
 
