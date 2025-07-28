@@ -141,7 +141,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     
     // LinkBand SDK from Maven Central
-    implementation("io.github.looxidlabs:SDK-Android:1.0.1") 
+    implementation("io.github.looxidlabs:SDK-Android:1.0.1") #⚠️ 최신 버전 적용
 }
 ```
 
