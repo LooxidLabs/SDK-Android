@@ -217,532 +217,256 @@ dependencies {
 
 2. **파일 위치 지정**:
    - 파일들을 적절한 패키지 구조에 맞게 생성해야 합니다
-   - 하단의 경로에 **MainViewModel.kt** 와 **LinkBand-App.kt** 생성  
+   - 하단의 경로에 **LinkBand-App.kt** 생성  
    
 > ***../yourProjectName/app/src/main/java/com/example/yourProjectName/ui***
 
 ### 1. MainActivity.kt
-**역할**: 앱의 진입점, 권한 관리, 화면 전환
+**역할**: 앱의 진입점, 권한 관리, Navigation Compose 기반 다중 화면 관리
 
 **주요 기능**:
 - 블루투스 및 위치 권한 요청
-- 스캐너 화면 ↔ 데이터 화면 전환
-- MainViewModel 인스턴스 관리
+- Navigation Compose를 통한 화면 전환 (scan, data, files, csvViewer)
+- LinkBandSdk 인스턴스 관리 및 생명주기 관리
+- 각 화면에 필요한 상태 및 콜백 전달
+- 권한이 없는 경우 권한 요청 UI 표시
+
+**화면 구성**:
+- **ScanScreen**: 블루투스 디바이스 스캔 및 연결 화면
+- **DataScreen**: 센서 데이터 표시 및 제어 화면
+- **FileListScreen**: CSV 파일 목록 표시 화면
+- **CsvViewerScreen**: CSV 파일 내용 뷰어 화면
 
 **샘플 코드**:
 ```kotlin
-/**
- * MainActivity.kt - 기능별 독립 샘플 메인 액티비티
- * 
- * 이 파일은 LinkBand 애플리케이션의 메인 액티비티로, 앱의 진입점 역할을 합니다.
- * 블루투스 및 위치 권한 관리, 화면 전환 로직을 담당하며,
- * Jetpack Compose를 사용하여 UI를 구성합니다.
- * 
- * 주요 기능:
- * - 블루투스 및 위치 권한 요청 및 관리
- * - 스캐너 화면과 데이터 화면 간 전환
- * - MainViewModel 인스턴스 관리
- * - 권한이 없는 경우 권한 요청 UI 표시
- */
-package com.example.yourProjectName
+package com.example.test
 
 import android.Manifest
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Scaffold
+//import androidx.compose.runtime.*
+
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
+
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.*
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.test.ui.CsvViewerScreen
+import com.example.test.ui.DataScreen
+import com.example.test.ui.FileListScreen
+import com.example.test.ui.ScanScreen
+import com.example.test.ui.theme.TestTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
-import com.example.yourProjectName.ui.*
-import com.example.yourProjectName.ui.MainViewModel
+import io.github.looxidlabs.sdkandroid.*
 
-/**
- * 메인 액티비티
- * 
- * LinkBand 애플리케이션의 메인 액티비티로, 앱의 전체적인 생명주기를 관리합니다.
- * 블루투스 권한 관리와 화면 전환을 담당하며, MainViewModel을 통해
- * 블루투스 연결 및 센서 데이터 관리를 수행합니다.
- */
 class MainActivity : ComponentActivity() {
-    // MainViewModel 인스턴스 - 블루투스 연결 및 센서 데이터 관리
-    private val viewModel: MainViewModel by viewModels()
+    private lateinit var sdk: LinkBandSdk
     
-    /**
-     * 액티비티 생성 시 호출되는 메서드
-     * 
-     * 앱 초기화, 권한 요청, UI 설정을 수행합니다.
-     * 
-     * @param savedInstanceState 액티비티 상태 저장 데이터
-     */
     @OptIn(ExperimentalPermissionsApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Android 버전에 따른 필요한 권한 목록 설정
-        val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12 (API 31) 이상에서 필요한 권한
-            listOf(
-                Manifest.permission.BLUETOOTH_SCAN,    // 블루투스 스캔 권한
-                Manifest.permission.BLUETOOTH_CONNECT, // 블루투스 연결 권한
-                Manifest.permission.ACCESS_FINE_LOCATION // 정확한 위치 권한
-            )
-        } else {
-            // Android 11 이하에서 필요한 권한
-            listOf(
-                Manifest.permission.BLUETOOTH,         // 블루투스 권한
-                Manifest.permission.BLUETOOTH_ADMIN,   // 블루투스 관리 권한
-                Manifest.permission.ACCESS_FINE_LOCATION // 정확한 위치 권한
-            )
-        }
-        
-        // Jetpack Compose UI 설정
+        sdk = LinkBandSdk(this)
+        enableEdgeToEdge()
         setContent {
-            // 다중 권한 상태 관리
-            val permissionState = rememberMultiplePermissionsState(permissions)
-            
-            // 현재 화면 상태 관리 ("scanner" 또는 "data")
-            var currentScreen by remember { mutableStateOf("scanner") }
-            
-            // 권한이 부여되지 않은 경우 자동으로 권한 요청
-            LaunchedEffect(permissionState.allPermissionsGranted) {
-                if (!permissionState.allPermissionsGranted) {
-                    permissionState.launchMultiplePermissionRequest()
+            TestTheme {
+                val navController = rememberNavController()
+                
+                // BLE 권한 요청
+                val permissions = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    listOf(
+                        Manifest.permission.BLUETOOTH_SCAN,
+                        Manifest.permission.BLUETOOTH_CONNECT,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                } else {
+                    listOf(
+                        Manifest.permission.BLUETOOTH,
+                        Manifest.permission.BLUETOOTH_ADMIN,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )
+                }
+                
+                val permissionState = rememberMultiplePermissionsState(permissions)
+                
+                LaunchedEffect(permissionState.allPermissionsGranted) {
+                    if (!permissionState.allPermissionsGranted) {
+                        permissionState.launchMultiplePermissionRequest()
+                    }
+                }
+                
+                if (permissionState.allPermissionsGranted) {
+                    Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = "scan",
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("scan") {
+                                val scannedDevices by sdk.scannedDevices.collectAsState(initial = emptyList())
+                                val isScanning by sdk.isScanning.collectAsState(initial = false)
+                                val isConnected by sdk.isConnected.collectAsState(initial = false)
+                                val isAutoReconnectEnabled by sdk.isAutoReconnectEnabled.collectAsState(initial = false)
+                                
+                                ScanScreen(
+                                    scannedDevices = scannedDevices,
+                                    isScanning = isScanning,
+                                    isConnected = isConnected,
+                                    isAutoReconnectEnabled = isAutoReconnectEnabled,
+                                    onStartScan = { sdk.startScan() },
+                                    onStopScan = { sdk.stopScan() },
+                                    onConnect = { device -> sdk.connectToDevice(device) },
+                                    onNavigateToData = { 
+                                        navController.navigate("data") {
+                                            popUpTo("scan") { inclusive = true }
+                                        }
+                                    },
+                                    onEnableAutoReconnect = { sdk.enableAutoReconnect() },
+                                    onDisableAutoReconnect = { sdk.disableAutoReconnect() },
+                                    navController = navController
+                                )
+                            }
+                            
+                            composable("data") {
+                                val eegData by sdk.eegData.collectAsState(initial = emptyList())
+                                val ppgData by sdk.ppgData.collectAsState(initial = emptyList())
+                                val accData by sdk.accData.collectAsState(initial = emptyList())
+                                val batteryData by sdk.batteryData.collectAsState(initial = null)
+                                val isConnected by sdk.isConnected.collectAsState(initial = false)
+                                val isEegStarted by sdk.isEegStarted.collectAsState(initial = false)
+                                val isPpgStarted by sdk.isPpgStarted.collectAsState(initial = false)
+                                val isAccStarted by sdk.isAccStarted.collectAsState(initial = false)
+                                val selectedSensors by sdk.selectedSensors.collectAsState(initial = emptySet())
+                                val isReceivingData by sdk.isReceivingData.collectAsState(initial = false)
+                                val isRecording by sdk.isRecording.collectAsState(initial = false)
+                                val isAutoReconnectEnabled by sdk.isAutoReconnectEnabled.collectAsState(initial = false)
+                                val connectedDeviceName by sdk.connectedDeviceName.collectAsState(initial = null)
+                                val accelerometerMode by sdk.accelerometerMode.collectAsState(initial = AccelerometerMode.RAW)
+                                val processedAccData by sdk.processedAccData.collectAsState(initial = emptyList())
+                                // 배치 모니터링 관련 상태들 추가
+                                val selectedCollectionMode by sdk.selectedCollectionMode.collectAsState(initial = CollectionMode.SAMPLE_COUNT)
+                                
+                                DataScreen(
+                                    eegData = eegData,
+                                    ppgData = ppgData,
+                                    accData = accData,
+                                    batteryData = batteryData,
+                                    isConnected = isConnected,
+                                    isEegStarted = isEegStarted,
+                                    isPpgStarted = isPpgStarted,
+                                    isAccStarted = isAccStarted,
+                                    selectedSensors = selectedSensors,
+                                    isReceivingData = isReceivingData,
+                                    isRecording = isRecording,
+                                    isAutoReconnectEnabled = isAutoReconnectEnabled,
+                                    connectedDeviceName = connectedDeviceName,
+                                    accelerometerMode = accelerometerMode,
+                                    processedAccData = processedAccData,
+                                    // 배치 모니터링 관련 매개변수들 추가
+                                    selectedCollectionMode = selectedCollectionMode,
+                                    getSensorConfiguration = { sensorType ->
+                                        sdk.getSensorConfiguration(sensorType)
+                                    },
+                                    onDisconnect = { sdk.disconnect() },
+                                    onNavigateToScan = { 
+                                        navController.navigate("scan") {
+                                            popUpTo("data") { inclusive = true }
+                                        }
+                                    },
+                                    onSelectSensor = { sensor -> sdk.selectSensor(sensor) },
+                                    onDeselectSensor = { sensor -> sdk.deselectSensor(sensor) },
+                                    onStartSelectedSensors = { sdk.startSelectedSensors() },
+                                    onStopSelectedSensors = { sdk.stopSelectedSensors() },
+                                    onStartRecording = { sdk.startRecording() },
+                                    onStopRecording = { sdk.stopRecording() },
+                                    onShowFileList = { navController.navigate("files") },
+                                    onToggleAutoReconnect = { 
+                                        if (isAutoReconnectEnabled) {
+                                            sdk.disableAutoReconnect()
+                                        } else {
+                                            sdk.enableAutoReconnect()
+                                        }
+                                    },
+                                    onSetAccelerometerMode = { mode -> sdk.setAccelerometerMode(mode) },
+                                    // 배치 모니터링 콜백 함수들 추가
+                                    onCollectionModeChange = { mode ->
+                                        sdk.setCollectionMode(mode)
+                                    },
+                                    onSampleCountChange = { sensorType, count, text ->
+                                        sdk.updateSensorSampleCount(sensorType, count, text)
+                                    },
+                                    onSecondsChange = { sensorType, seconds, text ->
+                                        sdk.updateSensorSeconds(sensorType, seconds, text)
+                                    },
+                                    onMinutesChange = { sensorType, minutes, text ->
+                                        sdk.updateSensorMinutes(sensorType, minutes, text)
+                                    },
+                                    navController = navController
+                                )
+                            }
+                            
+                            composable("files") {
+                                FileListScreen(
+                                    onBack = {
+                                        navController.popBackStack()
+                                    },
+                                    onFileClick = { file ->
+                                        // 파일 경로를 URL 인코딩하여 네비게이션에 전달
+                                        val encodedPath = java.net.URLEncoder.encode(file.absolutePath, "UTF-8")
+                                        navController.navigate("csvViewer/$encodedPath")
+                                    }
+                                )
+                            }
+                            
+                            composable("csvViewer/{filePath}") { backStackEntry ->
+                                val encodedPath = backStackEntry.arguments?.getString("filePath") ?: ""
+                                val filePath = java.net.URLDecoder.decode(encodedPath, "UTF-8")
+                                val file = java.io.File(filePath)
+                                
+                                CsvViewerScreen(
+                                    file = file,
+                                    onBackClick = {
+                                        navController.popBackStack()
+                                    }
+                                )
+                            }
+                        }
+                    }
                 }
             }
-            
-            // 권한이 모두 부여된 경우 메인 UI 표시
-            if (permissionState.allPermissionsGranted) {
-                // 현재 화면에 따라 적절한 화면 컴포넌트 표시
-                when (currentScreen) {
-                    "scanner" -> {
-                        // 블루투스 스캐너 화면
-                        // 디바이스 연결 시 자동으로 데이터 화면으로 전환
-                        LinkBandScannerScreen(
-                            viewModel = viewModel,
-                            onDataScreenClick = { currentScreen = "data" }
-                        )
-                    }
-                    "data" -> {
-                        // 센서 데이터 표시 화면
-                        // 연결 해제 시 스캐너 화면으로 돌아감
-                        LinkBandDataScreen(
-                            viewModel = viewModel,
-                            onDisconnect = { currentScreen = "scanner" }
-                        )
-                    }
-                    else -> {
-                        // 기본값으로 스캐너 화면 표시
-                        LinkBandScannerScreen(
-                            viewModel = viewModel,
-                            onDataScreenClick = { currentScreen = "data" }
-                        )
-                    }
-                }
-            } else {
-                // 권한이 부여되지 않은 경우 권한 요청 UI 표시
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-                    // 권한 필요 안내 텍스트
-                    Text(
-                        text = "권한이 필요합니다",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Medium
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // 필요한 권한 설명
-                    Text(
-                        text = "블루투스 및 위치 권한을 허용해주세요",
-                        fontSize = 16.sp,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    // 권한 요청 버튼
-                    Button(
-                        onClick = { permissionState.launchMultiplePermissionRequest() }
-                    ) {
-                        Text("권한 요청")
-                    }
-                }
-            }
         }
     }
-} 
+    
+    override fun onDestroy() {
+        super.onDestroy()
+        if (::sdk.isInitialized) {
+            sdk.cleanup()
+        }
+    }
+}
 ```
 
-### 2. MainViewModel.kt
-**역할**: 비즈니스 로직 관리, BleManager 통신
 
-**주요 기능**:
-- 블루투스 연결 상태 관리
-- 센서 데이터 수신 및 처리
-- CSV 기록 제어
-- UI 상태 제공
-
-**샘플 코드**:
-```kotlin
-/**
- * MainViewModel.kt - 기능별 독립 샘플 메인 ViewModel
- * 
- * 이 파일은 LinkBand 애플리케이션의 메인 ViewModel로, 모든 샘플의 공통 기능을 관리합니다.
- * BleManager를 통해 블루투스 연결, 센서 데이터 수신, CSV 기록 등의 기능을 제공합니다.
- * 
- * 주요 기능:
- * - 블루투스 디바이스 스캔 및 연결 관리
- * - 센서 데이터 수신 및 상태 관리
- * - CSV 파일 기록 제어
- * - 자동 재연결 기능
- * - 연결 상태 및 데이터 상태 모니터링
- */
-package com.example.yourProjectName.ui
-
-import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.viewModelScope
-import io.github.looxidlabs.sdkandroid.*
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-
-/**
- * 메인 ViewModel - 모든 샘플의 공통 기능 관리
- * 
- * LinkBand 디바이스와의 모든 상호작용을 관리하는 중앙 ViewModel입니다.
- * BleManager를 통해 실제 블루투스 통신을 처리하고, UI에 필요한 상태를 제공합니다.
- * 
- * @param application Android Application 인스턴스
- */
-class MainViewModel(application: android.app.Application) : AndroidViewModel(application) {
-    // BleManager 인스턴스 - 실제 블루투스 통신 처리
-    private val bleManager = BleManager(application)
-    
-    // ===== 공통 상태들 =====
-    
-    /**
-     * 블루투스 연결 상태
-     * true: 연결됨, false: 연결 해제됨
-     */
-    val isConnected: StateFlow<Boolean> = bleManager.isConnected
-    
-    /**
-     * 연결된 디바이스 이름
-     * 연결되지 않은 경우 null
-     */
-    val connectedDeviceName: StateFlow<String?> = bleManager.connectedDeviceName
-    
-    /**
-     * 센서 데이터 수신 상태
-     * true: 데이터 수신 중, false: 데이터 수신 안됨
-     */
-    val isReceivingData: StateFlow<Boolean> = bleManager.isReceivingData
-    
-    /**
-     * 배터리 데이터
-     * 디바이스에서 수신된 배터리 정보
-     */
-    val batteryData: StateFlow<BatteryData?> = bleManager.batteryData
-    
-    // ===== 블루투스 스캔 관련 상태 =====
-    
-    /**
-     * 스캔된 디바이스 목록
-     * 블루투스 스캔으로 발견된 디바이스들의 리스트
-     */
-    val scannedDevices: StateFlow<List<android.bluetooth.BluetoothDevice>> = bleManager.scannedDevices
-    
-    /**
-     * 스캔 진행 상태
-     * true: 스캔 중, false: 스캔 중지됨
-     */
-    val isScanning: StateFlow<Boolean> = bleManager.isScanning
-    
-    // ===== 센서 관련 상태 =====
-    
-    /**
-     * 선택된 센서 목록
-     * 사용자가 선택한 센서들의 Set (EEG, PPG, ACC)
-     */
-    val selectedSensors: StateFlow<Set<SensorType>> = bleManager.selectedSensors
-    
-    /**
-     * EEG 데이터 리스트
-     * 수신된 EEG 센서 데이터들의 리스트
-     */
-    val eegData: StateFlow<List<EegData>> = bleManager.eegData
-    
-    /**
-     * PPG 데이터 리스트
-     * 수신된 PPG 센서 데이터들의 리스트
-     */
-    val ppgData: StateFlow<List<PpgData>> = bleManager.ppgData
-    
-    /**
-     * ACC 데이터 리스트
-     * 수신된 ACC 센서 데이터들의 리스트
-     */
-    val accData: StateFlow<List<AccData>> = bleManager.accData
-    
-    // ===== CSV 기록 관련 상태 =====
-    
-    /**
-     * CSV 기록 상태
-     * true: 기록 중, false: 기록 중지됨
-     */
-    val isRecording: StateFlow<Boolean> = bleManager.isRecording
-    
-    // ===== 연결 관리 상태 =====
-    
-    /**
-     * 자동 재연결 활성화 상태
-     * true: 자동 재연결 활성화, false: 자동 재연결 비활성화
-     */
-    val isAutoReconnectEnabled: StateFlow<Boolean> = bleManager.isAutoReconnectEnabled
-    
-    // ===== 블루투스 스캔 기능 =====
-    
-    /**
-     * 블루투스 디바이스 스캔 시작
-     * 
-     * 주변의 블루투스 디바이스를 검색합니다.
-     * 스캔 결과는 scannedDevices StateFlow를 통해 UI에 전달됩니다.
-     */
-    fun startScan() {
-        viewModelScope.launch {
-            bleManager.startScan()
-        }
-    }
-    
-    /**
-     * 블루투스 디바이스 스캔 중지
-     * 
-     * 진행 중인 블루투스 스캔을 중지합니다.
-     * 배터리 절약을 위해 스캔이 완료되면 자동으로 호출됩니다.
-     */
-    fun stopScan() {
-        viewModelScope.launch {
-            bleManager.stopScan()
-        }
-    }
-    
-    // ===== 디바이스 연결 기능 =====
-    
-    /**
-     * 특정 디바이스에 연결
-     * 
-     * @param device 연결할 블루투스 디바이스 객체
-     * 
-     * 선택된 디바이스와 블루투스 연결을 시도합니다.
-     * 연결 성공 시 isConnected가 true로 변경됩니다.
-     */
-    fun connectToDevice(device: android.bluetooth.BluetoothDevice) {
-        viewModelScope.launch {
-            bleManager.connectToDevice(device)
-        }
-    }
-    
-    /**
-     * 현재 연결된 디바이스 연결 해제
-     * 
-     * 현재 연결된 LinkBand 디바이스와의 연결을 해제합니다.
-     * 연결 해제 시 isConnected가 false로 변경됩니다.
-     */
-    fun disconnect() {
-        viewModelScope.launch {
-            bleManager.disconnect()
-        }
-    }
-    
-    // ===== 자동 재연결 기능 =====
-    
-    /**
-     * 자동 재연결 기능 활성화
-     * 
-     * 연결이 끊어졌을 때 자동으로 재연결을 시도하도록 설정합니다.
-     * 네트워크 불안정이나 일시적인 연결 문제를 자동으로 해결합니다.
-     */
-    fun enableAutoReconnect() {
-        viewModelScope.launch {
-            bleManager.enableAutoReconnect()
-        }
-    }
-    
-    /**
-     * 자동 재연결 기능 비활성화
-     * 
-     * 자동 재연결 기능을 비활성화합니다.
-     * 연결이 끊어지면 수동으로 재연결해야 합니다.
-     */
-    fun disableAutoReconnect() {
-        viewModelScope.launch {
-            bleManager.disableAutoReconnect()
-        }
-    }
-    
-    // ===== 센서 선택 기능 =====
-    
-    /**
-     * 센서 선택
-     * 
-     * @param sensor 선택할 센서 타입 (EEG, PPG, ACC)
-     * 
-     * 특정 센서를 활성화할 센서 목록에 추가합니다.
-     * 선택된 센서는 selectedSensors StateFlow에 반영됩니다.
-     */
-    fun selectSensor(sensor: SensorType) {
-        viewModelScope.launch {
-            bleManager.selectSensor(sensor)
-        }
-    }
-    
-    /**
-     * 센서 선택 해제
-     * 
-     * @param sensor 선택 해제할 센서 타입 (EEG, PPG, ACC)
-     * 
-     * 특정 센서를 활성화할 센서 목록에서 제거합니다.
-     * 선택 해제된 센서는 selectedSensors StateFlow에서 제거됩니다.
-     */
-    fun deselectSensor(sensor: SensorType) {
-        viewModelScope.launch {
-            bleManager.deselectSensor(sensor)
-        }
-    }
-    
-    // ===== 센서 활성화/비활성화 =====
-    
-    /**
-     * 선택된 센서들 활성화
-     * 
-     * selectedSensors에 포함된 모든 센서를 활성화하여 데이터 수신을 시작합니다.
-     * 센서 활성화 시 isReceivingData가 true로 변경됩니다.
-     */
-    fun startSelectedSensors() {
-        viewModelScope.launch {
-            bleManager.startSelectedSensors()
-        }
-    }
-    
-    /**
-     * 선택된 센서들 비활성화
-     * 
-     * 현재 활성화된 모든 센서를 비활성화하여 데이터 수신을 중지합니다.
-     * 센서 비활성화 시 isReceivingData가 false로 변경됩니다.
-     */
-    fun stopSelectedSensors() {
-        viewModelScope.launch {
-            bleManager.stopSelectedSensors()
-        }
-    }
-    
-    // ===== CSV 기록 기능 =====
-    
-    /**
-     * CSV 기록 시작
-     * 
-     * 현재 수신 중인 센서 데이터를 CSV 파일로 기록하기 시작합니다.
-     * 기록 시작 시 isRecording이 true로 변경됩니다.
-     * 파일은 Download/LinkBand 폴더에 저장됩니다.
-     */
-    fun startRecording() {
-        viewModelScope.launch {
-            bleManager.startRecording()
-        }
-    }
-    
-    /**
-     * CSV 기록 중지
-     * 
-     * 진행 중인 CSV 기록을 중지하고 파일을 저장합니다.
-     * 기록 중지 시 isRecording이 false로 변경됩니다.
-     */
-    fun stopRecording() {
-        viewModelScope.launch {
-            bleManager.stopRecording()
-        }
-    }
-    
-    // ===== 공통 유틸리티 함수들 =====
-    
-    /**
-     * 연결 상태 초기화
-     * 
-     * 현재 연결을 해제하고 스캔을 중지하여 모든 상태를 초기화합니다.
-     * 앱 재시작이나 오류 복구 시 사용됩니다.
-     */
-    fun resetConnection() {
-        viewModelScope.launch {
-            // 연결 상태 초기화
-            bleManager.disconnect()
-            bleManager.stopScan()
-        }
-    }
-    
-    /**
-     * 연결 상태 문자열 반환
-     * 
-     * @return 현재 연결 상태를 나타내는 한국어 문자열
-     * 
-     * UI에서 연결 상태를 표시할 때 사용되는 유틸리티 함수입니다.
-     */
-    fun getConnectionStatus(): String {
-        return when {
-            isConnected.value -> "연결됨"
-            isScanning.value -> "스캔 중"
-            else -> "연결 해제됨"
-        }
-    }
-    
-    /**
-     * 데이터 수신 상태 문자열 반환
-     * 
-     * @return 현재 데이터 수신 상태를 나타내는 한국어 문자열
-     * 
-     * UI에서 데이터 수신 상태를 표시할 때 사용되는 유틸리티 함수입니다.
-     */
-    fun getDataStatus(): String {
-        return when {
-            isReceivingData.value -> "데이터 수신 중"
-            selectedSensors.value.isNotEmpty() -> "센서 선택됨"
-            else -> "데이터 수신 안됨"
-        }
-    }
-    
-    /**
-     * CSV 기록 상태 문자열 반환
-     * 
-     * @return 현재 CSV 기록 상태를 나타내는 한국어 문자열
-     * 
-     * UI에서 CSV 기록 상태를 표시할 때 사용되는 유틸리티 함수입니다.
-     */
-    fun getRecordingStatus(): String {
-        return if (isRecording.value) "기록 중" else "기록 중지됨"
-    }
-} 
-```
-
-### 3. LinkBand-App.kt
+### 2. LinkBand-App.kt
 **역할**: Jetpack Compose UI 컴포넌트
 
 **주요 기능**:
 - LinkBandScannerScreen: 디바이스 스캔 및 연결 UI
 - LinkBandDataScreen: 센서 데이터 표시 및 제어 UI
 - 공통 컴포넌트: DeviceItem, SensorDataCard, ReceivingIndicator
+- 개별 센서 시작 상태 관리 (isEegStarted, isPpgStarted, isAccStarted)
+- 가속도계 모드 설정 (RAW/MOTION)
+- 배치 데이터 수집 모드 설정
+- 파일 관리 및 CSV 뷰어 기능
 
 **샘플 코드**:
 ```kotlin
@@ -759,7 +483,7 @@ class MainViewModel(application: android.app.Application) : AndroidViewModel(app
  * - SensorDataCard: 센서 데이터 표시 카드 컴포넌트
  * - ReceivingIndicator: 데이터 수신 상태 표시 컴포넌트
  */
-package com.example.yourProjectName.ui
+package com.example.test.ui
 
 import android.bluetooth.BluetoothDevice
 import androidx.compose.foundation.layout.*
@@ -772,7 +496,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
 import io.github.looxidlabs.sdkandroid.*
-import com.example.yourProjectName.ui.MainViewModel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 import android.util.Log
@@ -782,21 +505,21 @@ import android.util.Log
  * 
  * 블루투스 디바이스를 스캔하고 LinkBand 디바이스와 연결을 관리하는 화면입니다.
  * 
- * @param viewModel MainViewModel 인스턴스 - 블루투스 연결 및 디바이스 관리
+ * @param sdk LinkBandSdk 인스턴스 - 블루투스 연결 및 디바이스 관리
  * @param onDataScreenClick 데이터 화면으로 이동하는 콜백 함수
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LinkBandScannerScreen(
-    viewModel: MainViewModel,
+    sdk: LinkBandSdk,
     onDataScreenClick: () -> Unit = {}
 ) {
     // UI 상태 관리를 위한 StateFlow 값들
-    val scannedDevices by viewModel.scannedDevices.collectAsState(initial = emptyList())
-    val isScanning by viewModel.isScanning.collectAsState(initial = false)
-    val isConnected by viewModel.isConnected.collectAsState(initial = false)
-    val connectedDeviceName by viewModel.connectedDeviceName.collectAsState(initial = null)
-    val isAutoReconnectEnabled by viewModel.isAutoReconnectEnabled.collectAsState(initial = false)
+    val scannedDevices by sdk.scannedDevices.collectAsState(initial = emptyList())
+    val isScanning by sdk.isScanning.collectAsState(initial = false)
+    val isConnected by sdk.isConnected.collectAsState(initial = false)
+    val connectedDeviceName by sdk.connectedDeviceName.collectAsState(initial = null)
+    val isAutoReconnectEnabled by sdk.isAutoReconnectEnabled.collectAsState(initial = false)
     
     // 연결 상태가 변경되면 자동으로 데이터 표시 페이지로 이동
     LaunchedEffect(isConnected) {
@@ -849,9 +572,9 @@ fun LinkBandScannerScreen(
                     checked = isAutoReconnectEnabled,
                     onCheckedChange = { enabled ->
                         if (enabled) {
-                            viewModel.enableAutoReconnect()
+                            sdk.enableAutoReconnect()
                         } else {
-                            viewModel.disableAutoReconnect()
+                            sdk.disableAutoReconnect()
                         }
                     }
                 )
@@ -860,7 +583,7 @@ fun LinkBandScannerScreen(
         
         // 블루투스 스캔 시작/중지 버튼
         Button(
-            onClick = if (isScanning) viewModel::stopScan else viewModel::startScan,
+            onClick = if (isScanning) sdk::stopScan else sdk::startScan,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text(if (isScanning) "스캔 중지" else "스캔 시작")
@@ -907,8 +630,8 @@ fun LinkBandScannerScreen(
                             DeviceItem(
                                 device = device,
                                 isConnected = isConnected,
-                                onConnect = { viewModel.connectToDevice(device) },
-                                onDisconnect = { viewModel.disconnect() }
+                                onConnect = { sdk.connectToDevice(device) },
+                                onDisconnect = { sdk.disconnect() }
                             )
                         }
                     }
@@ -924,25 +647,28 @@ fun LinkBandScannerScreen(
  * 연결된 LinkBand 디바이스로부터 수신된 센서 데이터를 표시하고
  * 센서 제어 및 CSV 기록 기능을 제공하는 화면입니다.
  * 
- * @param viewModel MainViewModel 인스턴스 - 센서 데이터 및 제어 관리
+ * @param sdk LinkBandSdk 인스턴스 - 센서 데이터 및 제어 관리
  * @param onDisconnect 연결 해제 시 호출되는 콜백 함수
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LinkBandDataScreen(
-    viewModel: MainViewModel,
+    sdk: LinkBandSdk,
     onDisconnect: () -> Unit = {}
 ) {
     // UI 상태 관리를 위한 StateFlow 값들
-    val isConnected by viewModel.isConnected.collectAsState(initial = false)
-    val selectedSensors by viewModel.selectedSensors.collectAsState(initial = emptySet())
-    val isReceivingData by viewModel.isReceivingData.collectAsState(initial = false)
-    val eegData by viewModel.eegData.collectAsState(initial = emptyList())
-    val ppgData by viewModel.ppgData.collectAsState(initial = emptyList())
-    val accData by viewModel.accData.collectAsState(initial = emptyList())
-    val batteryData by viewModel.batteryData.collectAsState(initial = null)
-    val isRecording by viewModel.isRecording.collectAsState(initial = false)
-    val connectedDeviceName by viewModel.connectedDeviceName.collectAsState(initial = null)
+    val isConnected by sdk.isConnected.collectAsState(initial = false)
+    val selectedSensors by sdk.selectedSensors.collectAsState(initial = emptySet())
+    val isReceivingData by sdk.isReceivingData.collectAsState(initial = false)
+    val eegData by sdk.eegData.collectAsState(initial = emptyList())
+    val ppgData by sdk.ppgData.collectAsState(initial = emptyList())
+    val accData by sdk.accData.collectAsState(initial = emptyList())
+    val batteryData by sdk.batteryData.collectAsState(initial = null)
+    val isRecording by sdk.isRecording.collectAsState(initial = false)
+    val connectedDeviceName by sdk.connectedDeviceName.collectAsState(initial = null)
+    val isEegStarted by sdk.isEegStarted.collectAsState(initial = false)
+    val isPpgStarted by sdk.isPpgStarted.collectAsState(initial = false)
+    val isAccStarted by sdk.isAccStarted.collectAsState(initial = false)
     
     // 수집 시작 시점의 선택된 센서 스냅샷 (UI 표시용)
     var startedSensors by remember { mutableStateOf<Set<SensorType>>(emptySet()) }
@@ -993,9 +719,9 @@ fun LinkBandDataScreen(
                     ) {
                         Text(
                             text = if (isConnected && connectedDeviceName != null) {
-                                "$connectedDeviceName ${viewModel.getConnectionStatus()}"
+                                "$connectedDeviceName 연결됨"
                             } else {
-                                viewModel.getConnectionStatus()
+                                "연결되지 않음"
                             },
                             fontWeight = FontWeight.Medium
                         )
@@ -1070,8 +796,8 @@ fun LinkBandDataScreen(
                                 Checkbox(
                                     checked = selectedSensors.contains(SensorType.EEG),
                                     onCheckedChange = { checked ->
-                                        if (checked) viewModel.selectSensor(SensorType.EEG) 
-                                        else viewModel.deselectSensor(SensorType.EEG)
+                                        if (checked) sdk.selectSensor(SensorType.EEG) 
+                                        else sdk.deselectSensor(SensorType.EEG)
                                     }
                                 )
                                 Column {
@@ -1088,8 +814,8 @@ fun LinkBandDataScreen(
                                 Checkbox(
                                     checked = selectedSensors.contains(SensorType.PPG),
                                     onCheckedChange = { checked ->
-                                        if (checked) viewModel.selectSensor(SensorType.PPG) 
-                                        else viewModel.deselectSensor(SensorType.PPG)
+                                        if (checked) sdk.selectSensor(SensorType.PPG) 
+                                        else sdk.deselectSensor(SensorType.PPG)
                                     }
                                 )
                                 Column {
@@ -1105,8 +831,8 @@ fun LinkBandDataScreen(
                                 Checkbox(
                                     checked = selectedSensors.contains(SensorType.ACC),
                                     onCheckedChange = { checked ->
-                                        if (checked) viewModel.selectSensor(SensorType.ACC) 
-                                        else viewModel.deselectSensor(SensorType.ACC)
+                                        if (checked) sdk.selectSensor(SensorType.ACC) 
+                                        else sdk.deselectSensor(SensorType.ACC)
                                     }
                                 )
                                 Column {
@@ -1122,10 +848,10 @@ fun LinkBandDataScreen(
                         Button(
                             onClick = {
                                 if (isReceivingData) {
-                                    viewModel.stopSelectedSensors()
+                                    sdk.stopSelectedSensors()
                                 } else {
                                     activationRequested = true
-                                    viewModel.startSelectedSensors()
+                                    sdk.startSelectedSensors()
                                 }
                             },
                             enabled = selectedSensors.isNotEmpty(),
@@ -1240,9 +966,9 @@ fun LinkBandDataScreen(
                         Button(
                             onClick = {
                                 if (isRecording) {
-                                    viewModel.stopRecording()
+                                    sdk.stopRecording()
                                 } else {
-                                    viewModel.startRecording()
+                                    sdk.startRecording()
                                 }
                             },
                             enabled = isConnected && isReceivingData,
@@ -1268,7 +994,7 @@ fun LinkBandDataScreen(
                         
                         // 기록 상태 표시
                         Text(
-                            text = "기록 상태: ${viewModel.getRecordingStatus()}",
+                            text = "기록 상태: ${if (isRecording) "기록 중" else "기록 중지됨"}",
                             fontSize = 14.sp
                         )
                         
@@ -1288,7 +1014,7 @@ fun LinkBandDataScreen(
             item {
                 Button(
                     onClick = { 
-                        viewModel.disconnect()
+                        sdk.disconnect()
                         onDisconnect()
                     },
                     colors = ButtonDefaults.buttonColors(
