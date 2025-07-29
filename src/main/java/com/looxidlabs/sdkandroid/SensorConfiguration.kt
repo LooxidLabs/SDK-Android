@@ -1,4 +1,4 @@
-package com.example.linkbandsdk
+package com.looxidlabs.sdkandroid
 
 import com.example.linkbandsdk.SensorType
 

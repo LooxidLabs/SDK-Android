@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.linkbandsdk"
+    namespace = "com.looxidlabs.sdkandroid"
     compileSdk = 34
 
     defaultConfig {

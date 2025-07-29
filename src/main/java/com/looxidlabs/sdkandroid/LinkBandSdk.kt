@@ -1,4 +1,4 @@
-package com.example.linkbandsdk
+package com.looxidlabs.sdkandroid
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context

@@ -1,4 +1,4 @@
-package com.example.linkbandsdk
+package com.looxidlabs.sdkandroid
 
 import android.util.Log
 import java.util.Date

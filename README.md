@@ -416,7 +416,7 @@ package com.example.yourProjectName.ui
 
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.linkbandsdk.*
+import io.github.looxidlabs.sdkandroid.*
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
@@ -771,7 +771,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.*
-import com.example.linkbandsdk.*
+import io.github.looxidlabs.sdkandroid.*
 import com.example.yourProjectName.ui.MainViewModel
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
