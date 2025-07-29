@@ -104,7 +104,7 @@ org.gradle.java.home=/usr/libexec/java_home -v 17 명령어로 확인된 경로
 # LinkBand SDK settings
 sdkGroupId = io.github.looxidlabs
 sdkArtifactId = SDK-Android
-sdkVersion = 1.0.1
+sdkVersion = 1.0.1 #⚠️ 최신 버전 적용
 ```
 
 **예시** (Homebrew 설치 시):
@@ -115,7 +115,7 @@ org.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/H
 # LinkBand SDK settings
 sdkGroupId = io.github.looxidlabs
 sdkArtifactId = SDK-Android
-sdkVersion = 1.0.1
+sdkVersion = 1.0.1 #⚠️ 최신 버전 적용
 ```
 
 ### build.gradle.kts 의존성 추가
