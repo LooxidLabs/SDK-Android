@@ -1157,15 +1157,19 @@ fun ReceivingIndicator() {
 ---
 ## LinkBand SDK 함수 설명
 
-### BleManager 클래스
+### LinkBandSdk 인스턴스 생성
+
+LinkBandSdk를 사용하기 위해 인스턴스를 생성합니다. 일반적으로 `sdk` 변수명을 사용합니다.
+
+### LinkBandSdk 클래스
 
 #### 블루투스 스캔 관련
 ```kotlin
 // 스캔 시작
-bleManager.startScan()
+sdk.startScan()
 
 // 스캔 중지  
-bleManager.stopScan()
+sdk.stopScan()
 
 // 스캔된 디바이스 목록
 val scannedDevices: StateFlow<List<BluetoothDevice>>
@@ -1177,10 +1181,10 @@ val isScanning: StateFlow<Boolean>
 #### 디바이스 연결 관련
 ```kotlin
 // 특정 디바이스 연결
-bleManager.connectToDevice(device: BluetoothDevice)
+sdk.connectToDevice(device: BluetoothDevice)
 
 // 연결 해제
-bleManager.disconnect()
+sdk.disconnect()
 
 // 연결 상태
 val isConnected: StateFlow<Boolean>
@@ -1192,10 +1196,10 @@ val connectedDeviceName: StateFlow<String?>
 #### 자동 재연결 관련
 ```kotlin
 // 자동 재연결 활성화
-bleManager.enableAutoReconnect()
+sdk.enableAutoReconnect()
 
 // 자동 재연결 비활성화
-bleManager.disableAutoReconnect()
+sdk.disableAutoReconnect()
 
 // 자동 재연결 상태
 val isAutoReconnectEnabled: StateFlow<Boolean>
@@ -1204,15 +1208,15 @@ val isAutoReconnectEnabled: StateFlow<Boolean>
 #### 센서 제어 관련
 ```kotlin
 // 센서 선택/해제
-bleManager.selectSensor(sensor: SensorType)
-bleManager.deselectSensor(sensor: SensorType)
+sdk.selectSensor(sensor: SensorType)
+sdk.deselectSensor(sensor: SensorType)
 
 // 선택된 센서 목록
 val selectedSensors: StateFlow<Set<SensorType>>
 
 // 센서 활성화/비활성화
-bleManager.startSelectedSensors()
-bleManager.stopSelectedSensors()
+sdk.startSelectedSensors()
+sdk.stopSelectedSensors()
 
 // 데이터 수신 상태
 val isReceivingData: StateFlow<Boolean>
@@ -1240,8 +1244,8 @@ val batteryData: StateFlow<BatteryData?>
 #### CSV 기록 관련
 ```kotlin
 // CSV 기록 시작/중지
-bleManager.startRecording()
-bleManager.stopRecording()
+sdk.startRecording()
+sdk.stopRecording()
 
 // 기록 상태
 val isRecording: StateFlow<Boolean>
@@ -1254,19 +1258,19 @@ val isRecording: StateFlow<Boolean>
 #### 기본 함수들
 ```kotlin
 // 수집 모드 설정 (샘플 수, 초, 분)
-bleManager.setCollectionMode(mode: CollectionMode)
+sdk.setCollectionMode(mode: CollectionMode)
 
 // 센서별 샘플 수 설정
-bleManager.updateSensorSampleCount(sensorType: SensorType, sampleCount: Int, sampleCountText: String)
+sdk.updateSensorSampleCount(sensorType: SensorType, sampleCount: Int, sampleCountText: String)
 
 // 센서별 초 단위 설정
-bleManager.updateSensorSeconds(sensorType: SensorType, seconds: Int, secondsText: String)
+sdk.updateSensorSeconds(sensorType: SensorType, seconds: Int, secondsText: String)
 
 // 센서별 분 단위 설정
-bleManager.updateSensorMinutes(sensorType: SensorType, minutes: Int, minutesText: String)
+sdk.updateSensorMinutes(sensorType: SensorType, minutes: Int, minutesText: String)
 
 // 센서 설정 가져오기
-bleManager.getSensorConfiguration(sensorType: SensorType): SensorBatchConfiguration?
+sdk.getSensorConfiguration(sensorType: SensorType): SensorBatchConfiguration?
 
 // 배치 데이터 StateFlow들
 val eegBatchData: StateFlow<List<EegData>>
@@ -1297,38 +1301,38 @@ data class SensorBatchConfiguration(
 #### 수집 모드 설정
 ```kotlin
 // 수집 모드 변경
-bleManager.setCollectionMode(CollectionMode.SAMPLE_COUNT)  // 샘플 수 기반
-bleManager.setCollectionMode(CollectionMode.SECONDS)       // 초 단위
-bleManager.setCollectionMode(CollectionMode.MINUTES)       // 분 단위
+sdk.setCollectionMode(CollectionMode.SAMPLE_COUNT)  // 샘플 수 기반
+sdk.setCollectionMode(CollectionMode.SECONDS)       // 초 단위
+sdk.setCollectionMode(CollectionMode.MINUTES)       // 분 단위
 ```
 
 #### 센서별 배치 설정
 ```kotlin
 // 샘플 수 기반 배치 설정
-bleManager.updateSensorSampleCount(SensorType.EEG, sampleCount, sampleCountText)
+sdk.updateSensorSampleCount(SensorType.EEG, sampleCount, sampleCountText)
 
 // 시간 기반 배치 설정 (초 단위)
-bleManager.updateSensorSeconds(SensorType.PPG, seconds, secondsText)
+sdk.updateSensorSeconds(SensorType.PPG, seconds, secondsText)
 
 // 시간 기반 배치 설정 (분 단위)
-bleManager.updateSensorMinutes(SensorType.ACC, minutes, minutesText)
+sdk.updateSensorMinutes(SensorType.ACC, minutes, minutesText)
 
 // 현재 센서 설정 조회
-val config = bleManager.getSensorConfiguration(SensorType.EEG)
+val config = sdk.getSensorConfiguration(SensorType.EEG)
 ```
 
 #### 배치 데이터 수신
 ```kotlin
 // 배치 데이터 StateFlow 수신
-bleManager.eegBatchData.collect { batch ->
+sdk.eegBatchData.collect { batch ->
     // EEG 배치 데이터 처리
 }
 
-bleManager.ppgBatchData.collect { batch ->
+sdk.ppgBatchData.collect { batch ->
     // PPG 배치 데이터 처리
 }
 
-bleManager.accBatchData.collect { batch ->
+sdk.accBatchData.collect { batch ->
     // ACC 배치 데이터 처리
 }
 ```
@@ -1401,17 +1405,17 @@ val timeConfig = DataCollectionConfig(
 #### 기본 배치 수집
 ```kotlin
 // 1. 수집 모드 설정
-bleManager.setCollectionMode(CollectionMode.SAMPLE_COUNT)
+sdk.setCollectionMode(CollectionMode.SAMPLE_COUNT)
 
 // 2. 센서 설정
-bleManager.updateSensorSampleCount(SensorType.EEG, 250, "250")
+sdk.updateSensorSampleCount(SensorType.EEG, 250, "250")
 
 // 3. 센서 활성화
-bleManager.selectSensor(SensorType.EEG)
-bleManager.startSelectedSensors()
+sdk.selectSensor(SensorType.EEG)
+sdk.startSelectedSensors()
 
 // 4. 배치 데이터 수신
-bleManager.eegBatchData.collect { batch ->
+sdk.eegBatchData.collect { batch ->
     // 배치 데이터 처리
 }
 ```
@@ -1419,17 +1423,17 @@ bleManager.eegBatchData.collect { batch ->
 #### 시간 기반 배치 수집
 ```kotlin
 // 1. 시간 기반 모드 설정
-bleManager.setCollectionMode(CollectionMode.SECONDS)
+sdk.setCollectionMode(CollectionMode.SECONDS)
 
 // 2. 시간 간격 설정
-bleManager.updateSensorSeconds(SensorType.PPG, 5, "5")
+sdk.updateSensorSeconds(SensorType.PPG, 5, "5")
 
 // 3. 센서 활성화
-bleManager.selectSensor(SensorType.PPG)
-bleManager.startSelectedSensors()
+sdk.selectSensor(SensorType.PPG)
+sdk.startSelectedSensors()
 
 // 4. 배치 데이터 수신
-bleManager.ppgBatchData.collect { batch ->
+sdk.ppgBatchData.collect { batch ->
     // 배치 데이터 처리
 }
 ```
