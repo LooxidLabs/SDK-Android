@@ -2,6 +2,9 @@
 
 LooxidLabs LinkBand 디바이스와의 Bluetooth 연결 및 센서 데이터 수집을 위한 Android SDK입니다.
 
+### 데모 앱을 사용해보고 싶다면 아래 링크를 참고하세요:
+https://github.com/LooxidLabs/Android-LinkBandDemoApp.git  
+
 ## 주요 기능
 
 ### 📡 Bluetooth 연결
