@@ -767,7 +767,7 @@ fun LinkBandDataScreen(
                                 val latest = eegData.takeLast(3)
                                 latest.forEach { data ->
                                     Text(
-                                        text = "timestamp: ${data.timestamp.time}, ch1uV: ${data.channel1.roundToInt()}µV, ch2uV: ${data.channel2.roundToInt()}µV, leadOff: ${if (data.leadOff) "1" else "0"}",
+                                        text = "timestamp: ${data.timestamp.time}, ch1Raw: ${data.ch1Raw}, ch2Raw: ${data.ch2Raw}, ch1uV: ${data.channel1.roundToInt()}µV, ch2uV: ${data.channel2.roundToInt()}µV, leadOff: ${if (data.leadOff) "1" else "0"}",
                                         fontSize = 12.sp
                                     )
                                 }
