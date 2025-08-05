@@ -39,11 +39,14 @@ LooxidLabs LinkBand 디바이스와의 Bluetooth 연결 및 센서 데이터 수
 ### 💾 데이터 관리
 - CSV 형식으로 센서 데이터 저장
 
-## 기술 스택
 
-- **언어**: Kotlin
-- **최소 지원 버전**: Android API 34 (Android 14.0)+
-- **Java 버전**: 17
+## 요구사항
+
+- Android Studio Arctic Fox 이상
+- Java 17 이상
+- Android 14.0+ (API 34) 이상의 실제 디바이스
+- Bluetooth 기능 지원 디바이스
+
 
 ## 프로젝트 구조
 
@@ -60,6 +63,171 @@ Android-LinkBandSDK/
 ├── consumer-rules.pro           # ProGuard 규칙
 └── proguard-rules.pro           # ProGuard 규칙
 ```
+
+---
+
+## LinkBand SDK 함수 설명
+
+LinkBand SDK를 사용하기 위한 핵심 함수들을 카테고리별로 정리했습니다. 각 함수의 용도와 사용 시점을 명확하게 설명합니다.
+
+### 1. 기본 연결 관리
+
+#### 📡 블루투스 스캔
+- **`sdk.startScan()`**
+  - 용도: LinkBand 디바이스 검색 시작
+  - 사용 시점: 연결할 디바이스를 찾고 싶을 때
+  - 결과: `scannedDevices`에 발견된 디바이스 목록 업데이트
+
+- **`sdk.stopScan()`**
+  - 용도: 디바이스 검색 중지
+  - 사용 시점: 원하는 디바이스를 찾았거나 스캔을 멈추고 싶을 때
+
+- **`sdk.isScanning`**
+  - 용도: 현재 스캔 중인지 확인
+  - 타입: `StateFlow<Boolean>`
+  - 사용 시점: UI에서 스캔 상태를 표시할 때
+
+#### 🔗 디바이스 연결
+- **`sdk.connectToDevice(device: BluetoothDevice)`**
+  - 용도: 특정 LinkBand 디바이스에 연결
+  - 사용 시점: 스캔으로 찾은 디바이스에 연결하고 싶을 때
+  - 파라미터: `device` - 연결할 블루투스 디바이스 객체
+
+- **`sdk.disconnect()`**
+  - 용도: 현재 연결된 디바이스와의 연결 해제
+  - 사용 시점: 연결을 끊고 싶을 때
+
+- **`sdk.isConnected`**
+  - 용도: 디바이스 연결 상태 확인
+  - 타입: `StateFlow<Boolean>`
+  - 사용 시점: UI에서 연결 상태를 표시할 때
+
+#### 🔄 자동 재연결
+- **`sdk.enableAutoReconnect()`**
+  - 용도: 자동 재연결 기능 활성화
+  - 사용 시점: 연결이 끊어져도 자동으로 다시 연결하고 싶을 때
+
+- **`sdk.disableAutoReconnect()`**
+  - 용도: 자동 재연결 기능 비활성화
+  - 사용 시점: 수동으로만 연결을 관리하고 싶을 때
+
+### 2. 센서 데이터 수집
+
+#### 🎯 센서 선택
+- **`sdk.selectSensor(sensor: SensorType)`**
+  - 용도: 사용할 센서 선택
+  - 파라미터: `SensorType.EEG`, `SensorType.PPG`, `SensorType.ACC` 중 선택
+  - 사용 시점: 데이터를 수집하고 싶은 센서를 지정할 때
+
+- **`sdk.deselectSensor(sensor: SensorType)`**
+  - 용도: 선택된 센서 해제
+  - 사용 시점: 특정 센서의 데이터 수집을 중단하고 싶을 때
+
+#### ▶️ 센서 활성화
+- **`sdk.startSelectedSensors()`**
+  - 용도: 선택된 센서들의 데이터 수집 시작
+  - 사용 시점: 실시간 센서 데이터를 받기 시작하고 싶을 때
+  - 주의: 센서를 먼저 선택한 후 호출해야 함
+
+- **`sdk.stopSelectedSensors()`**
+  - 용도: 센서 데이터 수집 중지
+  - 사용 시점: 데이터 수집을 멈추고 싶을 때
+
+#### 📊 센서 데이터 수신
+- **`sdk.eegData`**
+  - 용도: EEG(뇌파) 데이터 수신
+  - 타입: `StateFlow<List<EegData>>`
+  - 포함 정보: 타임스탬프, 채널1/2 전압값(µV), 전극 접촉 상태
+
+- **`sdk.ppgData`**
+  - 용도: PPG(맥파) 데이터 수신
+  - 타입: `StateFlow<List<PpgData>>`
+  - 포함 정보: 타임스탬프, 적색광(red), 적외선(ir) 신호값
+
+- **`sdk.accData`**
+  - 용도: 가속도계 데이터 수신
+  - 타입: `StateFlow<List<AccData>>`
+  - 포함 정보: 타임스탬프, X/Y/Z축 가속도 값
+
+- **`sdk.batteryData`**
+  - 용도: 배터리 상태 정보 수신
+  - 타입: `StateFlow<BatteryData?>`
+  - 포함 정보: 배터리 레벨(0-100%)
+
+### 3. 데이터 기록
+
+#### 💾 CSV 파일 저장
+- **`sdk.startRecording()`**
+  - 용도: 센서 데이터를 CSV 파일로 저장 시작
+  - 사용 시점: 데이터를 파일로 기록하고 싶을 때
+  - 저장 위치: `/Download/LinkBand/` 폴더
+
+- **`sdk.stopRecording()`**
+  - 용도: CSV 파일 저장 중지
+  - 사용 시점: 기록을 멈추고 싶을 때
+
+- **`sdk.isRecording`**
+  - 용도: 현재 기록 중인지 확인
+  - 타입: `StateFlow<Boolean>`
+  - 사용 시점: UI에서 기록 상태를 표시할 때
+
+### 4. 고급 기능 (배치 데이터 수집)
+
+#### ⚙️ 수집 모드 설정
+- **`sdk.setCollectionMode(mode: CollectionMode)`**
+  - 용도: 데이터 수집 방식 변경
+  - 파라미터: `SAMPLE_COUNT`(샘플 수), `SECONDS`(초), `MINUTES`(분)
+  - 사용 시점: 배치 단위로 데이터를 수집하고 싶을 때
+
+#### 📈 센서별 배치 설정
+- **`sdk.updateSensorSampleCount(sensor, count, text)`**
+  - 용도: 센서별 목표 샘플 수 설정
+  - 사용 시점: 특정 개수만큼 데이터를 모아서 처리하고 싶을 때
+
+- **`sdk.updateSensorSeconds(sensor, seconds, text)`**
+  - 용도: 센서별 수집 시간(초) 설정
+  - 사용 시점: 일정 시간 동안의 데이터를 모아서 처리하고 싶을 때
+
+- **`sdk.updateSensorMinutes(sensor, minutes, text)`**
+  - 용도: 센서별 수집 시간(분) 설정
+  - 사용 시점: 장시간 데이터를 모아서 처리하고 싶을 때
+
+#### 📦 배치 데이터 수신
+- **`sdk.eegBatchData`**
+  - 용도: 설정된 조건에 따라 모아진 EEG 데이터 수신
+  - 타입: `StateFlow<List<EegData>>`
+
+- **`sdk.ppgBatchData`**
+  - 용도: 설정된 조건에 따라 모아진 PPG 데이터 수신
+  - 타입: `StateFlow<List<PpgData>>`
+
+- **`sdk.accBatchData`**
+  - 용도: 설정된 조건에 따라 모아진 ACC 데이터 수신
+  - 타입: `StateFlow<List<AccData>>`
+
+### 5. 상태 정보
+
+#### ℹ️ 실시간 상태 확인
+- **`sdk.scannedDevices`**
+  - 용도: 스캔으로 발견된 디바이스 목록
+  - 타입: `StateFlow<List<BluetoothDevice>>`
+
+- **`sdk.connectedDeviceName`**
+  - 용도: 현재 연결된 디바이스 이름
+  - 타입: `StateFlow<String?>`
+
+- **`sdk.selectedSensors`**
+  - 용도: 현재 선택된 센서 목록
+  - 타입: `StateFlow<Set<SensorType>>`
+
+- **`sdk.isReceivingData`**
+  - 용도: 현재 센서 데이터를 수신 중인지 확인
+  - 타입: `StateFlow<Boolean>`
+
+- **`sdk.isAutoReconnectEnabled`**
+  - 용도: 자동 재연결 기능 활성화 상태
+  - 타입: `StateFlow<Boolean>`
+
 ---
 ## 🔧 설치 및 사용
 
@@ -241,7 +409,8 @@ dependencies {
 - **FileListScreen**: CSV 파일 목록 표시 화면
 - **CsvViewerScreen**: CSV 파일 내용 뷰어 화면
 
-**샘플 코드**:
+## 기본 설정 - 코드 예시
+
 ```kotlin
 package com.example.newtest
 
@@ -1041,313 +1210,6 @@ fun ReceivingIndicator() {
     )
 } 
 ```
----
-## LinkBand SDK 함수 설명
-
-### LinkBandSdk 인스턴스 생성
-
-LinkBandSdk를 사용하기 위해 인스턴스를 생성합니다. 일반적으로 `sdk` 변수명을 사용합니다.
-
-### LinkBandSdk 클래스
-
-#### 블루투스 스캔 관련
-```kotlin
-// 스캔 시작
-sdk.startScan()
-
-// 스캔 중지  
-sdk.stopScan()
-
-// 스캔된 디바이스 목록
-val scannedDevices: StateFlow<List<BluetoothDevice>>
-
-// 스캔 상태
-val isScanning: StateFlow<Boolean>
-```
-
-#### 디바이스 연결 관련
-```kotlin
-// 특정 디바이스 연결
-sdk.connectToDevice(device: BluetoothDevice)
-
-// 연결 해제
-sdk.disconnect()
-
-// 연결 상태
-val isConnected: StateFlow<Boolean>
-
-// 연결된 디바이스 이름
-val connectedDeviceName: StateFlow<String?>
-```
-
-#### 자동 재연결 관련
-```kotlin
-// 자동 재연결 활성화
-sdk.enableAutoReconnect()
-
-// 자동 재연결 비활성화
-sdk.disableAutoReconnect()
-
-// 자동 재연결 상태
-val isAutoReconnectEnabled: StateFlow<Boolean>
-```
-
-#### 센서 제어 관련
-```kotlin
-// 센서 선택/해제
-sdk.selectSensor(sensor: SensorType)
-sdk.deselectSensor(sensor: SensorType)
-
-// 선택된 센서 목록
-val selectedSensors: StateFlow<Set<SensorType>>
-
-// 센서 활성화/비활성화
-sdk.startSelectedSensors()
-sdk.stopSelectedSensors()
-
-// 데이터 수신 상태
-val isReceivingData: StateFlow<Boolean>
-```
-
-#### 센서 데이터 관련
-```kotlin
-// EEG 데이터 (뇌파)
-val eegData: StateFlow<List<EegData>>
-// EegData 구조: timestamp, channel1, channel2, leadOff
-
-// PPG 데이터 (맥파)
-val ppgData: StateFlow<List<PpgData>>
-// PpgData 구조: timestamp, red, ir
-
-// ACC 데이터 (가속도계)
-val accData: StateFlow<List<AccData>>
-// AccData 구조: timestamp, x, y, z
-
-// 배터리 데이터
-val batteryData: StateFlow<BatteryData?>
-// BatteryData 구조: level (0-100)
-```
-
-#### CSV 기록 관련
-```kotlin
-// CSV 기록 시작/중지
-sdk.startRecording()
-sdk.stopRecording()
-
-// 기록 상태
-val isRecording: StateFlow<Boolean>
-```
-
-## 🔧 고급 설정
-
-### 배치 데이터 수집
-
-#### 기본 함수들
-```kotlin
-// 수집 모드 설정 (샘플 수, 초, 분)
-sdk.setCollectionMode(mode: CollectionMode)
-
-// 센서별 샘플 수 설정
-sdk.updateSensorSampleCount(sensorType: SensorType, sampleCount: Int, sampleCountText: String)
-
-// 센서별 초 단위 설정
-sdk.updateSensorSeconds(sensorType: SensorType, seconds: Int, secondsText: String)
-
-// 센서별 분 단위 설정
-sdk.updateSensorMinutes(sensorType: SensorType, minutes: Int, minutesText: String)
-
-// 센서 설정 가져오기
-sdk.getSensorConfiguration(sensorType: SensorType): SensorBatchConfiguration?
-
-// 배치 데이터 StateFlow들
-val eegBatchData: StateFlow<List<EegData>>
-val ppgBatchData: StateFlow<List<PpgData>>
-val accBatchData: StateFlow<List<AccData>>
-```
-
-#### 관련 데이터 클래스들
-```kotlin
-// 수집 모드 enum
-enum class CollectionMode {
-    SAMPLE_COUNT,  // 샘플 수 기반
-    SECONDS,       // 초 단위
-    MINUTES        // 분 단위
-}
-
-// 센서 배치 설정 데이터 클래스
-data class SensorBatchConfiguration(
-    var sampleCount: Int,      // 샘플 수 (1-100000)
-    var seconds: Int,          // 초 단위 (1-3600)
-    var minutes: Int,          // 분 단위 (1-60)
-    var sampleCountText: String,
-    var secondsText: String,
-    var minutesText: String
-)
-```
-
-#### 수집 모드 설정
-```kotlin
-// 수집 모드 변경
-sdk.setCollectionMode(CollectionMode.SAMPLE_COUNT)  // 샘플 수 기반
-sdk.setCollectionMode(CollectionMode.SECONDS)       // 초 단위
-sdk.setCollectionMode(CollectionMode.MINUTES)       // 분 단위
-```
-
-#### 센서별 배치 설정
-```kotlin
-// 샘플 수 기반 배치 설정
-sdk.updateSensorSampleCount(SensorType.EEG, sampleCount, sampleCountText)
-
-// 시간 기반 배치 설정 (초 단위)
-sdk.updateSensorSeconds(SensorType.PPG, seconds, secondsText)
-
-// 시간 기반 배치 설정 (분 단위)
-sdk.updateSensorMinutes(SensorType.ACC, minutes, minutesText)
-
-// 현재 센서 설정 조회
-val config = sdk.getSensorConfiguration(SensorType.EEG)
-```
-
-#### 배치 데이터 수신
-```kotlin
-// 배치 데이터 StateFlow 수신
-sdk.eegBatchData.collect { batch ->
-    // EEG 배치 데이터 처리
-}
-
-sdk.ppgBatchData.collect { batch ->
-    // PPG 배치 데이터 처리
-}
-
-sdk.accBatchData.collect { batch ->
-    // ACC 배치 데이터 처리
-}
-```
-
-### TimeBatchManager 사용법
-
-#### 시간 기반 배치 관리자 생성
-```kotlin
-// 제네릭 타입으로 다양한 센서 데이터 지원
-val eegBatchManager = TimeBatchManager<EegData>(
-    targetIntervalMs = 1000L,  // 1초 간격
-    timestampExtractor = { it.timestamp }
-)
-```
-
-#### 배치 데이터 처리
-```kotlin
-// 샘플 추가 및 배치 완성 확인
-val batch = timeBatchManager.addSample(sample)
-if (batch != null) {
-    // 배치가 완성됨 - 처리 로직
-}
-
-// 수집 중지 시 마지막 배치 반환
-val finalBatch = timeBatchManager.flushBuffer()
-
-// 버퍼 관리
-timeBatchManager.clearBuffer()
-val bufferSize = timeBatchManager.getBufferSize()
-```
-
-### 가속도계 모드 설정
-
-#### 가속도계 모드 선택
-```kotlin
-enum class AccelerometerMode {
-    RAW,    // 원시 가속도 값 (중력 포함)
-    MOTION  // 선형 가속도 값 (중력 제거)
-}
-
-// 처리된 가속도계 데이터
-data class ProcessedAccData(
-    val timestamp: Date,
-    val x: Short,
-    val y: Short,
-    val z: Short,
-    val mode: AccelerometerMode
-)
-```
-
-### 데이터 수집 설정
-
-#### DataCollectionConfig 사용
-```kotlin
-// 샘플 수 기반 설정
-val sampleConfig = DataCollectionConfig(
-    sensorType = SensorType.EEG,
-    mode = DataCollectionConfig.DataCollectionMode.SampleCount(250)
-)
-
-// 시간 기반 설정
-val timeConfig = DataCollectionConfig(
-    sensorType = SensorType.PPG,
-    mode = DataCollectionConfig.DataCollectionMode.TimeInterval(5000L) // 5초
-)
-```
-
-### 사용 예시
-
-#### 기본 배치 수집
-```kotlin
-// 1. 수집 모드 설정
-sdk.setCollectionMode(CollectionMode.SAMPLE_COUNT)
-
-// 2. 센서 설정
-sdk.updateSensorSampleCount(SensorType.EEG, 250, "250")
-
-// 3. 센서 활성화
-sdk.selectSensor(SensorType.EEG)
-sdk.startSelectedSensors()
-
-// 4. 배치 데이터 수신
-sdk.eegBatchData.collect { batch ->
-    // 배치 데이터 처리
-}
-```
-
-#### 시간 기반 배치 수집
-```kotlin
-// 1. 시간 기반 모드 설정
-sdk.setCollectionMode(CollectionMode.SECONDS)
-
-// 2. 시간 간격 설정
-sdk.updateSensorSeconds(SensorType.PPG, 5, "5")
-
-// 3. 센서 활성화
-sdk.selectSensor(SensorType.PPG)
-sdk.startSelectedSensors()
-
-// 4. 배치 데이터 수신
-sdk.ppgBatchData.collect { batch ->
-    // 배치 데이터 처리
-}
-```
-
-#### TimeBatchManager 직접 사용
-```kotlin
-// 커스텀 배치 관리자 생성
-val customBatchManager = TimeBatchManager<EegData>(
-    targetIntervalMs = 2000L,  // 2초 간격
-    timestampExtractor = { it.timestamp }
-)
-
-// 데이터 처리
-eegData.forEach { data ->
-    customBatchManager.addSample(data)?.let { batch ->
-        // 배치 완성 시 처리
-        processBatch(batch)
-    }
-}
-```
-
-## 요구사항
-
-- Android Studio Arctic Fox 이상
-- Java 17 이상
-- Android 14.0 (API 34) 이상의 실제 디바이스
-- Bluetooth 기능 지원 디바이스
 
 ---
 
