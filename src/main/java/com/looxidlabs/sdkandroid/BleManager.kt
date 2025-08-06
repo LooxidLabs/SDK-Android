@@ -40,6 +40,8 @@ import java.util.Date
 import java.util.Locale
 import com.example.linkbandsdk.SensorType
 import java.util.concurrent.atomic.AtomicBoolean
+import org.json.JSONObject
+import org.json.JSONArray
 
 // 센서 타입 enum 추가
 // (SensorType enum 정의를 SensorData.kt로 이동)
@@ -198,6 +200,24 @@ class BleManager(private val context: Context) {
     private var ppgCsvWriter: FileWriter? = null
     private var accCsvWriter: FileWriter? = null
     private var recordingStartTime: Long = 0
+    
+    // JSON 기록 상태 관리
+    private var jsonWriter: FileWriter? = null
+    private var recordingStartTimeJson: Long = 0
+    
+    // 통합 JSON 데이터 구조 (스위프트 SensorDataJSON과 동일)
+    private val timestampData = mutableListOf<Double>()
+    private val eegChannel1Data = mutableListOf<Double>()
+    private val eegChannel2Data = mutableListOf<Double>()
+    private val eegLeadOffData = mutableListOf<Int>()
+    private val ppgRedData = mutableListOf<Int>()
+    private val ppgIrData = mutableListOf<Int>()
+    private val accelXData = mutableListOf<Int>()
+    private val accelYData = mutableListOf<Int>()
+    private val accelZData = mutableListOf<Int>()
+    
+    // JSON 데이터 스레드 안전성을 위한 락
+    private val jsonDataLock = Any()
     
     // 센서 활성화 큐 관리 변수들 추가
     private var sensorActivationQueue = mutableListOf<SensorType>()
@@ -973,9 +993,10 @@ class BleManager(private val context: Context) {
         
         try {
             recordingStartTime = System.currentTimeMillis()
+            recordingStartTimeJson = recordingStartTime
             val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             
-            // 내장 저장공간의 Downloads 폴더에 CSV 파일 생성
+            // 내장 저장공간의 Downloads 폴더에 파일 생성
             val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
             if (!downloadsDir.exists()) {
                 downloadsDir.mkdirs()
@@ -987,39 +1008,66 @@ class BleManager(private val context: Context) {
                 linkBandDir.mkdirs()
             }
             
-            // 선택된 센서에 대해서만 CSV 파일 생성
+            // JSON 데이터 버퍼 초기화
+            synchronized(jsonDataLock) {
+                timestampData.clear()
+                eegChannel1Data.clear()
+                eegChannel2Data.clear()
+                eegLeadOffData.clear()
+                ppgRedData.clear()
+                ppgIrData.clear()
+                accelXData.clear()
+                accelYData.clear()
+                accelZData.clear()
+            }
+            
+            // 선택된 센서에 대해서만 CSV와 JSON 파일 생성
             val createdFiles = mutableListOf<String>()
             
+            // 통합 JSON 파일 생성 (선택된 센서가 있으면 하나만 생성)
+            if (selectedSensors.isNotEmpty()) {
+                val jsonFile = File(linkBandDir, "LinkBand_SensorData_${timestamp}.json")
+                jsonWriter = FileWriter(jsonFile)
+                createdFiles.add("JSON=${jsonFile.name}")
+                Log.d("BleManager", "Unified JSON file created: ${jsonFile.name}")
+            }
+            
             if (selectedSensors.contains(SensorType.EEG)) {
+                // CSV 파일
                 val eegFile = File(linkBandDir, "LinkBand_EEG_${timestamp}.csv")
                 eegCsvWriter = FileWriter(eegFile)
                 eegCsvWriter?.write("timestamp,ch1Raw,ch2Raw,ch1uV,ch2uV,leadOff\n")
-                createdFiles.add("EEG=${eegFile.name}")
+                createdFiles.add("EEG_CSV=${eegFile.name}")
+                
                 Log.d("BleManager", "EEG CSV file created: ${eegFile.name}")
             }
             
             if (selectedSensors.contains(SensorType.PPG)) {
+                // CSV 파일
                 val ppgFile = File(linkBandDir, "LinkBand_PPG_${timestamp}.csv")
                 ppgCsvWriter = FileWriter(ppgFile)
                 ppgCsvWriter?.write("timestamp,red,ir\n")
-                createdFiles.add("PPG=${ppgFile.name}")
+                createdFiles.add("PPG_CSV=${ppgFile.name}")
+                
                 Log.d("BleManager", "PPG CSV file created: ${ppgFile.name}")
             }
             
             if (selectedSensors.contains(SensorType.ACC)) {
+                // CSV 파일
                 val accFile = File(linkBandDir, "LinkBand_ACC_${timestamp}.csv")
                 accCsvWriter = FileWriter(accFile)
                 accCsvWriter?.write("timestamp,x,y,z\n")
-                createdFiles.add("ACC=${accFile.name}")
+                createdFiles.add("ACC_CSV=${accFile.name}")
+                
                 Log.d("BleManager", "ACC CSV file created: ${accFile.name}")
             }
             
             _isRecording.value = true
-            Log.d("BleManager", "CSV recording started at: ${linkBandDir.absolutePath}")
-            Log.d("BleManager", "Created files for selected sensors: ${createdFiles.joinToString(", ")}")
+            Log.d("BleManager", "Recording started at: ${linkBandDir.absolutePath}")
+            Log.d("BleManager", "Created files: ${createdFiles.joinToString(", ")}")
             
         } catch (e: Exception) {
-            Log.e("BleManager", "Failed to start CSV recording", e)
+            Log.e("BleManager", "Failed to start recording", e)
             stopRecording()
         }
     }
@@ -1031,59 +1079,117 @@ class BleManager(private val context: Context) {
         }
         
         try {
-            // 생성된 파일들만 닫기
+            // JSON 데이터를 파일에 저장
+            saveJsonFiles()
+            
+            // CSV 파일들 닫기
             eegCsvWriter?.close()
             ppgCsvWriter?.close()
             accCsvWriter?.close()
             
+            // JSON 파일들 닫기
+            jsonWriter?.close()
+            
+            // 모든 writer 초기화
             eegCsvWriter = null
             ppgCsvWriter = null
             accCsvWriter = null
+            jsonWriter = null
+            
+            // JSON 데이터 버퍼 정리
+            synchronized(jsonDataLock) {
+                timestampData.clear()
+                eegChannel1Data.clear()
+                eegChannel2Data.clear()
+                eegLeadOffData.clear()
+                ppgRedData.clear()
+                ppgIrData.clear()
+                accelXData.clear()
+                accelYData.clear()
+                accelZData.clear()
+            }
             
             _isRecording.value = false
             
             val recordingDuration = (System.currentTimeMillis() - recordingStartTime) / 1000.0
-            Log.d("BleManager", "CSV recording stopped. Duration: ${recordingDuration}s")
+            Log.d("BleManager", "Recording stopped. Duration: ${recordingDuration}s")
             
         } catch (e: Exception) {
-            Log.e("BleManager", "Error stopping CSV recording", e)
+            Log.e("BleManager", "Error stopping recording", e)
         }
     }
     
     private fun writeEegToCsv(data: EegData) {
-        if (_isRecording.value && eegCsvWriter != null && _selectedSensors.value.contains(SensorType.EEG)) {
+        if (_isRecording.value && _selectedSensors.value.contains(SensorType.EEG)) {
             try {
-                // leadOff를 숫자로 변환: true -> 1, false -> 0
-                val leadOffValue = if (data.leadOff) 1 else 0
-                // 타임스탬프를 밀리초 단위로 저장 (더 읽기 쉽고 분석하기 좋음)
-                eegCsvWriter?.write("${data.timestamp.time},${data.ch1Raw},${data.ch2Raw},${data.channel1},${data.channel2},$leadOffValue\n")
-                eegCsvWriter?.flush()
+                // CSV 파일에 기록
+                if (eegCsvWriter != null) {
+                    val leadOffValue = if (data.leadOff) 1 else 0
+                    eegCsvWriter?.write("${data.timestamp.time},${data.ch1Raw},${data.ch2Raw},${data.channel1},${data.channel2},$leadOffValue\n")
+                    eegCsvWriter?.flush()
+                }
+                
+                // JSON 데이터 버퍼에 추가
+                if (jsonWriter != null) {
+                    synchronized(jsonDataLock) {
+                        timestampData.add(data.timestamp.time / 1000.0)
+                        eegChannel1Data.add(data.channel1) // µV 값 사용
+                        eegChannel2Data.add(data.channel2) // µV 값 사용
+                        eegLeadOffData.add(if (data.leadOff) 1 else 0)
+                    }
+                }
+                
             } catch (e: Exception) {
-                Log.e("BleManager", "Error writing EEG to CSV", e)
+                Log.e("BleManager", "Error writing EEG data", e)
             }
         }
     }
     
     private fun writePpgToCsv(data: PpgData) {
-        if (_isRecording.value && ppgCsvWriter != null && _selectedSensors.value.contains(SensorType.PPG)) {
+        if (_isRecording.value && _selectedSensors.value.contains(SensorType.PPG)) {
             try {
-                // 타임스탬프를 밀리초 단위로 저장 (더 읽기 쉽고 분석하기 좋음)
-                ppgCsvWriter?.write("${data.timestamp.time},${data.red},${data.ir}\n")
-                ppgCsvWriter?.flush()
+                // CSV 파일에 기록
+                if (ppgCsvWriter != null) {
+                    ppgCsvWriter?.write("${data.timestamp.time},${data.red},${data.ir}\n")
+                    ppgCsvWriter?.flush()
+                }
+                
+                // JSON 데이터 버퍼에 추가
+                if (jsonWriter != null) {
+                    synchronized(jsonDataLock) {
+                        timestampData.add(data.timestamp.time / 1000.0)
+                        ppgRedData.add(data.red)
+                        ppgIrData.add(data.ir)
+                    }
+                }
+                
             } catch (e: Exception) {
-                Log.e("BleManager", "Error writing PPG to CSV", e)
+                Log.e("BleManager", "Error writing PPG data", e)
             }
         }
     }
     
     private fun writeAccToCsv(data: ProcessedAccData) {
-        if (_isRecording.value && accCsvWriter != null && _selectedSensors.value.contains(SensorType.ACC)) {
+        if (_isRecording.value && _selectedSensors.value.contains(SensorType.ACC)) {
             try {
-                // 모드 정보 없이 타임스탬프, x, y, z만 저장
-                accCsvWriter?.write("${data.timestamp.time},${data.x},${data.y},${data.z}\n")
-                accCsvWriter?.flush()
+                // CSV 파일에 기록
+                if (accCsvWriter != null) {
+                    accCsvWriter?.write("${data.timestamp.time},${data.x},${data.y},${data.z}\n")
+                    accCsvWriter?.flush()
+                }
+                
+                // JSON 데이터 버퍼에 추가
+                if (jsonWriter != null) {
+                    synchronized(jsonDataLock) {
+                        timestampData.add(data.timestamp.time / 1000.0)
+                        accelXData.add(data.x.toInt())
+                        accelYData.add(data.y.toInt())
+                        accelZData.add(data.z.toInt())
+                    }
+                }
+                
             } catch (e: Exception) {
-                Log.e("BleManager", "Error writing ACC to CSV", e)
+                Log.e("BleManager", "Error writing ACC data", e)
             }
         }
     }
@@ -1453,5 +1559,33 @@ class BleManager(private val context: Context) {
             )
         }
         Log.i("BleManager", "------------------------------------")
+    }
+
+    // JSON 기록 제어 함수들
+    private fun saveJsonFiles() {
+        try {
+            // EEG JSON 파일 저장
+            if (jsonWriter != null && timestampData.isNotEmpty()) {
+                synchronized(jsonDataLock) {
+                    val jsonString = JSONObject().apply {
+                        put("timestamp", timestampData)
+                        put("eegChannel1", eegChannel1Data)
+                        put("eegChannel2", eegChannel2Data)
+                        put("eegLeadOff", eegLeadOffData)
+                        put("ppgRed", ppgRedData)
+                        put("ppgIr", ppgIrData)
+                        put("accelX", accelXData)
+                        put("accelY", accelYData)
+                        put("accelZ", accelZData)
+                    }.toString(2)
+                    jsonWriter?.write(jsonString)
+                    jsonWriter?.flush()
+                }
+                Log.d("BleManager", "EEG, PPG, ACC JSON data saved: ${timestampData.size} records")
+            }
+            
+        } catch (e: Exception) {
+            Log.e("BleManager", "Error saving JSON files", e)
+        }
     }
 } 
