@@ -1,7 +1,7 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
 import java.util.Date
-import com.example.linkbandsdk.SensorType
+import io.github.looxidlabs.sdkandroid.SensorType
 
 /**
  * 시간 기반 배치 관리를 위한 제네릭 클래스

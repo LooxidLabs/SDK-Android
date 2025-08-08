@@ -1,4 +1,4 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
@@ -16,18 +16,6 @@ import android.os.Handler
 import android.os.Looper
 import android.os.Environment
 import android.util.Log
-import com.example.linkbandsdk.AccData
-import com.example.linkbandsdk.BatteryData
-import com.example.linkbandsdk.EegData
-import com.example.linkbandsdk.PpgData
-import com.example.linkbandsdk.SensorDataParser
-import com.example.linkbandsdk.SensorDataParsingException
-import com.example.linkbandsdk.SensorBatchConfiguration
-import com.example.linkbandsdk.AccelerometerMode
-import com.example.linkbandsdk.ProcessedAccData
-import com.example.linkbandsdk.CollectionMode
-import com.example.linkbandsdk.DataCollectionConfig
-import com.example.linkbandsdk.TimeBatchManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,7 +26,6 @@ import java.io.FileWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import com.example.linkbandsdk.SensorType
 import java.util.concurrent.atomic.AtomicBoolean
 import org.json.JSONObject
 import org.json.JSONArray

@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.looxidlabs.sdkandroid"
+    namespace = "io.github.looxidlabs.sdkandroid"
     compileSdk = 34
 
     defaultConfig {
@@ -29,7 +29,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_11
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 }
 

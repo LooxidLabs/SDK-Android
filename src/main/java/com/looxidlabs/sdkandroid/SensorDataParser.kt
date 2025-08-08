@@ -1,10 +1,10 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
 import android.util.Log
 import java.util.Date
 import kotlin.math.pow
-import com.example.linkbandsdk.SensorType
-import com.example.linkbandsdk.SensorConfiguration
+import io.github.looxidlabs.sdkandroid.SensorType
+import io.github.looxidlabs.sdkandroid.SensorConfiguration
 
 /**
  * 센서 데이터 패킷을 구조화된 읽기값으로 파싱하는 순수 비즈니스 로직 클래스

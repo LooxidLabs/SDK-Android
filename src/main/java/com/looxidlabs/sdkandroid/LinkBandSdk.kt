@@ -1,4 +1,4 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
 import android.bluetooth.BluetoothDevice
 import android.content.Context

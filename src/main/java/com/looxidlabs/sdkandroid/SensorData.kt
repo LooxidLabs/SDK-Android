@@ -1,7 +1,6 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
 import java.util.Date
-import com.example.linkbandsdk.SensorType
 
 data class EegData(
     val timestamp: Date,
@@ -55,10 +54,10 @@ data class SensorDataState(
 class SensorDataParsingException(message: String) : Exception(message) 
 
 // 데이터 수집 모드를 정의하는 enum
-enum class CollectionMode {
-    SAMPLE_COUNT,
-    SECONDS,
-    MINUTES;
+enum class CollectionMode(val description: String) {
+    SAMPLE_COUNT("샘플 개수"),
+    SECONDS("초 단위"),
+    MINUTES("분 단위");
     
     companion object {
         val allCases = values().toList()

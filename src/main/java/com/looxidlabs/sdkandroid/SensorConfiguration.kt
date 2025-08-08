@@ -1,6 +1,6 @@
-package com.looxidlabs.sdkandroid
+package io.github.looxidlabs.sdkandroid
 
-import com.example.linkbandsdk.SensorType
+import io.github.looxidlabs.sdkandroid.SensorType
 
 /**
  * 센서 데이터 파싱을 위한 설정 클래스
