@@ -32,13 +32,7 @@ data class BatteryData(
 // 가속도계 표시 모드를 정의하는 enum
 enum class AccelerometerMode {
     RAW,    // 원시 가속도 값 표시 (중력 포함)
-    MOTION; // 선형 가속도 값 표시 (중력 제거)
-    
-    val description: String
-        get() = when (this) {
-            RAW -> "중력을 포함한 원시 가속도 값"
-            MOTION -> "중력을 제거한 움직임만 표시"
-        }
+    MOTION  // 선형 가속도 값 표시 (중력 제거)
 }
 
 // 처리된 가속도계 데이터 (UI 표시용)
@@ -61,10 +55,10 @@ data class SensorDataState(
 class SensorDataParsingException(message: String) : Exception(message) 
 
 // 데이터 수집 모드를 정의하는 enum
-enum class CollectionMode(val description: String) {
-    SAMPLE_COUNT("샘플 수"),
-    SECONDS("초단위"),
-    MINUTES("분단위");
+enum class CollectionMode {
+    SAMPLE_COUNT,
+    SECONDS,
+    MINUTES;
     
     companion object {
         val allCases = values().toList()
