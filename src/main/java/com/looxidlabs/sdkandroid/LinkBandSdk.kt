@@ -205,45 +205,124 @@ class LinkBandSdk(private val context: Context) {
         }
     }
     
-    // ==================== StateFlow 속성들 ====================
-    
-    // 연결 상태
-    val scannedDevices: StateFlow<List<BluetoothDevice>> = bleManager.scannedDevices
-    val isScanning: StateFlow<Boolean> = bleManager.isScanning
-    val isConnected: StateFlow<Boolean> = bleManager.isConnected
-    val connectedDeviceName: StateFlow<String?> = bleManager.connectedDeviceName
-    val isAutoReconnectEnabled: StateFlow<Boolean> = bleManager.isAutoReconnectEnabled
-    
-    // 센서 데이터
-    val eegData: StateFlow<List<EegData>> = bleManager.eegData
-    val ppgData: StateFlow<List<PpgData>> = bleManager.ppgData
-    val accData: StateFlow<List<AccData>> = bleManager.accData
-    val processedAccData: StateFlow<List<ProcessedAccData>> = bleManager.processedAccData
-    val batteryData: StateFlow<BatteryData?> = bleManager.batteryData
-    
-    // 센서 상태
-    val selectedSensors: StateFlow<Set<SensorType>> = bleManager.selectedSensors
-    val isEegStarted: StateFlow<Boolean> = bleManager.isEegStarted
-    val isPpgStarted: StateFlow<Boolean> = bleManager.isPpgStarted
-    val isAccStarted: StateFlow<Boolean> = bleManager.isAccStarted
-    val isReceivingData: StateFlow<Boolean> = bleManager.isReceivingData
-    val accelerometerMode: StateFlow<AccelerometerMode> = bleManager.accelerometerMode
-    
-    // 배치 데이터
-    val eegBatchData: StateFlow<List<EegData>> = bleManager.eegBatchData
-    val ppgBatchData: StateFlow<List<PpgData>> = bleManager.ppgBatchData
-    val accBatchData: StateFlow<List<AccData>> = bleManager.accBatchData
-    val selectedCollectionMode: StateFlow<CollectionMode> = bleManager.selectedCollectionMode
-    
-    // 기록 상태
-    val isRecording: StateFlow<Boolean> = bleManager.isRecording
+    // ==================== 상태 정보 ====================
     
     /**
-     * SDK를 정리합니다. 연결을 해제하고 리소스를 정리합니다.
+     * 스캔으로 발견된 디바이스 목록
+     */
+    val scannedDevices: StateFlow<List<BluetoothDevice>> = bleManager.scannedDevices
+    
+    /**
+     * 현재 스캔 진행 상태
+     */
+    val isScanning: StateFlow<Boolean> = bleManager.isScanning
+    
+    /**
+     * 현재 연결 상태
+     */
+    val isConnected: StateFlow<Boolean> = bleManager.isConnected
+    
+    /**
+     * 연결된 디바이스 이름
+     */
+    val connectedDeviceName: StateFlow<String?> = bleManager.connectedDeviceName
+    
+    /**
+     * 현재 선택된 센서 목록
+     */
+    val selectedSensors: StateFlow<Set<SensorType>> = bleManager.selectedSensors
+    
+    /**
+     * 센서 데이터 수신 상태
+     */
+    val isReceivingData: StateFlow<Boolean> = bleManager.isReceivingData
+    
+    /**
+     * 자동 재연결 기능 활성화 상태
+     */
+    val isAutoReconnectEnabled: StateFlow<Boolean> = bleManager.isAutoReconnectEnabled
+    
+    /**
+     * 데이터 기록 상태
+     */
+    val isRecording: StateFlow<Boolean> = bleManager.isRecording
+    
+    // ==================== 센서 데이터 ====================
+    
+    /**
+     * 실시간 EEG 데이터
+     */
+    val eegData: StateFlow<List<EegData>> = bleManager.eegData
+    
+    /**
+     * 실시간 PPG 데이터
+     */
+    val ppgData: StateFlow<List<PpgData>> = bleManager.ppgData
+    
+    /**
+     * 실시간 가속도계 데이터 (원시값)
+     */
+    val accData: StateFlow<List<AccData>> = bleManager.accData
+    
+    /**
+     * 실시간 가속도계 데이터 (처리된 값)
+     */
+    val processedAccData: StateFlow<List<ProcessedAccData>> = bleManager.processedAccData
+    
+    /**
+     * 배터리 정보
+     */
+    val batteryData: StateFlow<BatteryData?> = bleManager.batteryData
+    
+    /**
+     * EEG 센서 시작 상태
+     */
+    val isEegStarted: StateFlow<Boolean> = bleManager.isEegStarted
+    
+    /**
+     * PPG 센서 시작 상태
+     */
+    val isPpgStarted: StateFlow<Boolean> = bleManager.isPpgStarted
+    
+    /**
+     * 가속도계 센서 시작 상태
+     */
+    val isAccStarted: StateFlow<Boolean> = bleManager.isAccStarted
+    
+    /**
+     * 가속도계 모드 (원시값/움직임)
+     */
+    val accelerometerMode: StateFlow<AccelerometerMode> = bleManager.accelerometerMode
+    
+    // ==================== 배치 데이터 ====================
+    
+    /**
+     * 배치 수집된 EEG 데이터
+     */
+    val eegBatchData: StateFlow<List<EegData>> = bleManager.eegBatchData
+    
+    /**
+     * 배치 수집된 PPG 데이터
+     */
+    val ppgBatchData: StateFlow<List<PpgData>> = bleManager.ppgBatchData
+    
+    /**
+     * 배치 수집된 가속도계 데이터
+     */
+    val accBatchData: StateFlow<List<AccData>> = bleManager.accBatchData
+    
+    /**
+     * 현재 선택된 수집 모드
+     */
+    val selectedCollectionMode: StateFlow<CollectionMode> = bleManager.selectedCollectionMode
+    
+    /**
+     * SDK 리소스 정리
+     * 앱 종료 시 반드시 호출하여 모든 리소스를 정리합니다
      */
     fun cleanup() {
         sdkScope.launch {
-            bleManager.disconnect()
+            bleManager.cleanup()
         }
     }
 } 
