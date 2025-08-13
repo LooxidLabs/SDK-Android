@@ -255,8 +255,8 @@ class BleManager(private val context: Context) {
                     reconnectAttempts = 0
                     // 현재 연결된 디바이스를 마지막 연결 디바이스로 저장
                     lastConnectedDevice = gatt.device
-                    // 연결 완료 후 최대 MTU 설정 (515바이트)
-                    gatt.requestMtu(515)
+                    // 연결 완료 후 최대 MTU 설정 (BLE 최대한도: 247바이트)
+                    gatt.requestMtu(247)
                 }
                 BluetoothGatt.STATE_DISCONNECTED -> {
                     // 기록 중이면 기록 중지 (연결 해제 시)
