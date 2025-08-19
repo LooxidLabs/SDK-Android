@@ -272,6 +272,38 @@ LinkBand SDK를 사용하기 위한 핵심 함수들을 카테고리별로 정�
 
 **목적**: Java 17 환경 설정 및 SDK 메타데이터 정의
 
+#### 🚀 자동화 스크립트 사용 (권장)
+
+> [!TIP]
+> **자동화 스크립트를 사용하면 JDK 17 경로와 최신 SDK 버전을 자동으로 설정할 수 있습니다.**
+
+프로젝트 루트에 `script.sh` 파일이 포함되어 있습니다. 이 스크립트는:
+- JDK 17의 JAVA_HOME을 자동으로 찾습니다
+- Maven Central에서 최신 SDK 버전을 자동으로 가져옵니다
+- gradle.properties 형식으로 출력합니다
+
+**사용법:**
+```bash
+# gradle.properties 파일로 직접 저장
+./script.sh > gradle.properties
+
+# 또는 화면에 출력만 확인
+./script.sh
+```
+
+**출력 예시:**
+```properties
+org.gradle.java.home=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+sdkGroupId=io.github.looxidlabs
+sdkArtifactId=SDK-Android
+sdkVersion=1.0.1
+```
+
+#### 📝 수동 설정 방법
+
+> [!NOTE]
+> 자동화 스크립트를 사용할 수 없는 경우에만 수동으로 설정하세요.
+
 #### JDK 17 설치 및 설정
 
 1. **JDK 17 설치** (macOS 기준)
