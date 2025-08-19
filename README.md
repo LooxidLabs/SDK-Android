@@ -2,9 +2,9 @@
 
 LooxidLabs LinkBand 디바이스와의 Bluetooth 연결 및 센서 데이터 수집을 위한 Android SDK입니다.
 
+> [!TIP]
 > 데모 앱을 사용해보고 싶다면 아래 링크를 참고하세요:  
-
-🔗 https://github.com/LooxidLabs/Android-LinkBandDemoApp.git  
+> 🔗 https://github.com/LooxidLabs/Android-LinkBandDemoApp.git  
 
 ## 주요 기능
 
@@ -40,14 +40,15 @@ LooxidLabs LinkBand 디바이스와의 Bluetooth 연결 및 센서 데이터 수
 - CSV 형식으로 센서 데이터 저장
 - JSON 형식으로 센서 데이터 저장 (구조화된 데이터)
 
-
 ## 요구사항
+
+> [!IMPORTANT]
+> 다음 요구사항을 반드시 충족해야 정상적으로 작동합니다.
 
 - Android Studio Arctic Fox 이상
 - Java 17 이상
 - Android 14.0+ (API 34) 이상의 실제 디바이스
 - Bluetooth 기능 지원 디바이스
-
 
 ## 프로젝트 구조
 
@@ -192,7 +193,8 @@ LinkBand SDK를 사용하기 위한 핵심 함수들을 카테고리별로 정�
 }
 ```
 
-> **참고**: 각 센서의 샘플링 레이트가 다르므로 (EEG: 250Hz, PPG: 50Hz, ACC: 25Hz) 배열의 길이가 다를 수 있습니다.
+> [!NOTE]
+> 각 센서의 샘플링 레이트가 다르므로 (EEG: 250Hz, PPG: 50Hz, ACC: 25Hz) 배열의 길이가 다를 수 있습니다.
 
 ### 4. 고급 기능 (배치 데이터 수집)
 
@@ -287,9 +289,10 @@ LinkBand SDK를 사용하기 위한 핵심 함수들을 카테고리별로 정�
 3. **gradle.properties 파일 업데이트**
    > 위 명령어로 확인된 경로를 사용하여 기본 파일에 아래 코드 추가  
 
-   > ⚠️ **주의사항** : sdkVersion은 반드시 최신 버전으로 적용해야 합니다.  
-   최신 버전은 아래 링크에서 확인할 수 있습니다.  
-   🔗 https://central.sonatype.com/search?q=io.github.looxidlabs 
+   > [!WARNING]
+   > **주의사항** : sdkVersion은 반드시 최신 버전으로 적용해야 합니다.  
+   > 최신 버전은 아래 링크에서 확인할 수 있습니다.  
+   > 🔗 https://central.sonatype.com/search?q=io.github.looxidlabs 
 
 ```properties
 # Java 17 for Android Gradle Plugin
@@ -319,7 +322,8 @@ sdkVersion = 1.0.1 #⚠️ 최신 버전 적용
 
 > **app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
-> ⚠️ **주의사항** : gradle.properties 설정과 마찬가지로 최신 버전의 SDK를 적용해야 합니다. 
+> [!WARNING]
+> **주의사항** : gradle.properties 설정과 마찬가지로 최신 버전의 SDK를 적용해야 합니다. 
 
 ```gradle
 dependencies {
@@ -343,6 +347,9 @@ dependencies {
 ### AndroidManifest.xml 권한 설정
 
 **목적**: 블루투스 통신, 위치 접근, 파일 저장을 위한 필수 권한 및 FileProvider 설정
+
+> [!IMPORTANT]
+> 다음 권한들은 LinkBand SDK 사용을 위해 **필수**입니다.
 
 `<manifest>` 태그 안에 다음 권한을 추가하세요:
 
@@ -433,6 +440,9 @@ dependencies {
 - **CsvViewerScreen**: CSV 파일 내용 뷰어 화면
 
 ## 기본 설정 - 코드 예시
+
+> [!TIP]
+> 아래 코드는 기본적인 MainActivity 설정 예시입니다. 실제 프로젝트에 맞게 패키지명을 수정해주세요.
 
 ```kotlin
 package com.example.newtest
@@ -546,6 +556,9 @@ class MainActivity : ComponentActivity() {
 - 가속도계 모드 설정 (RAW/MOTION)
 - 배치 데이터 수집 모드 설정
 - 파일 관리 및 CSV 뷰어 기능
+
+> [!NOTE]
+> 이 파일은 UI 컴포넌트만 포함하고 있으며, 실제 비즈니스 로직은 MainActivity에서 처리됩니다.
 
 **샘플 코드**:
 ```kotlin
