@@ -329,7 +329,7 @@ sdkVersion=1.0.1
 ```properties
 # Java 17 for Android Gradle Plugin
 # 사용자마다 다른 java.home 위치를 확인하고 업데이트
-org.gradle.java.home=/usr/libexec/java_home -v 17 명령어로 확인된 경로
+org.gradle.java.home=#/usr/libexec/java_home -v 17 명령어로 확인된 경로
 
 # LinkBand SDK settings
 sdkGroupId = io.github.looxidlabs
@@ -352,7 +352,7 @@ sdkVersion = 1.0.1 #⚠️ 최신 버전 적용
 
 **목적**: Jetpack Compose, 권한 관리, 코루틴, LinkBand SDK 라이브러리 추가
 
-> **app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
+**app** 폴더 안의 build.gradle.kts 파일에 다음 의존성을 추가하세요:
 
 > [!WARNING]
 > **주의사항** : gradle.properties 설정과 마찬가지로 최신 버전의 SDK를 적용해야 합니다. 
@@ -449,6 +449,11 @@ dependencies {
    - 예를 들어, 프로젝트명이 **happyProject**이라면,  
    **com.example.yourProjectName** → **com.example.happyProject**으로 수정해야 합니다.
 
+   - **theme 관련 import 경로도 수정 필요**: 
+     - MainActivity.kt 등에서 사용하는 theme import 경로도 프로젝트명에 맞게 변경해야 합니다.
+    - **예시**: 프로젝트명이 **happyProject**라면, 아래와 같이 `yourProjectNameTheme` → `happyProjectTheme`으로 변경
+    > `import com.example.yourProjectName.ui.theme.yourProjectNameTheme` → `import com.example.happyProject.ui.theme.happyProjectTheme`
+
 2. **파일 위치 지정**:
    - 파일들을 적절한 패키지 구조에 맞게 생성해야 합니다
    - 하단의 경로에 **LinkBand-App.kt** 생성  
@@ -470,6 +475,38 @@ dependencies {
 - **DataScreen**: 센서 데이터 표시 및 제어 화면
 - **FileListScreen**: CSV 파일 목록 표시 화면
 - **CsvViewerScreen**: CSV 파일 내용 뷰어 화면
+
+#### 🔄 자동 화면 전환 메커니즘
+
+> [!TIP]
+> **연결되면 자동으로 데이터 화면으로 전환됩니다!**
+
+**화면 전환 흐름:**
+1. **스캔 화면** (`"scan"`)에서 디바이스 연결
+2. **연결 성공** 시 `sdk.isConnected` 상태가 `true`로 변경
+3. **LaunchedEffect**가 감지하여 `onDataScreenClick()` 콜백 실행
+4. **Navigation**으로 `"data"` 화면으로 자동 이동
+5. **이전 화면 스택 제거** (`popUpTo("scan") { inclusive = true }`)
+
+**핵심 코드:**
+```kotlin
+// MainActivity에서 콜백 설정
+LinkBandScannerScreen(
+    sdk = sdk,
+    onDataScreenClick = {
+        navController.navigate("data") {
+            popUpTo("scan") { inclusive = true }  // 스캔 화면을 스택에서 제거
+        }
+    }
+)
+
+// LinkBandScannerScreen에서 자동 전환
+LaunchedEffect(isConnected) {
+    if (isConnected) {
+        onDataScreenClick()  // 연결되면 자동 실행
+    }
+}
+```
 
 ## 기본 설정 - 코드 예시
 
@@ -645,7 +682,7 @@ fun LinkBandScannerScreen(
     val connectedDeviceName by sdk.connectedDeviceName.collectAsState(initial = null)
     val isAutoReconnectEnabled by sdk.isAutoReconnectEnabled.collectAsState(initial = false)
     
-    // 연결 상태가 변경되면 자동으로 데이터 표시 페이지로 이동
+    // 🔄 자동 화면 전환: 연결되면 데이터 화면으로 이동
     LaunchedEffect(isConnected) {
         if (isConnected) {
             onDataScreenClick()
