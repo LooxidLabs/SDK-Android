@@ -1,0 +1,9 @@
+# IDE Files
+.idea/
+.DS_Store
+
+# Build System
+.gradle/
+
+# Compiled Output / Build Artifacts
+build/
