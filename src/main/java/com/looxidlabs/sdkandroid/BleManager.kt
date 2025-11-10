@@ -401,26 +401,19 @@ class BleManager(private val context: Context) {
     // EEG 수동 시작 함수
     fun startEegService() {
         bluetoothGatt?.let { gatt ->
-            // 1. EEG 시작 명령 전송 (바이너리 명령 시도)
-            val eegWriteChar = gatt.getService(EEG_NOTIFY_SERVICE_UUID)?.getCharacteristic(EEG_WRITE_CHAR_UUID)
-            eegWriteChar?.let {
-                // 바이너리 명령 시도: 0x01 = start, 0x00 = stop
-                it.value = byteArrayOf(0x01)
-                gatt.writeCharacteristic(it)
-                // 2. EEG notification 설정 (파이썬의 toggle_eeg_notify와 동일)
-                handler.postDelayed({
-                    val eegNotifyChar = gatt.getService(EEG_NOTIFY_SERVICE_UUID)?.getCharacteristic(EEG_NOTIFY_CHAR_UUID)
-                    eegNotifyChar?.let { notifyChar ->
-                        gatt.setCharacteristicNotification(notifyChar, true)
-                        val descriptor = notifyChar.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
-                        descriptor?.let { desc ->
-                            desc.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
-                            gatt.writeDescriptor(desc)
-                            _isEegStarted.value = true
-                        }
+            // 2. EEG notification 설정 (파이썬의 toggle_eeg_notify와 동일)
+            handler.postDelayed({
+            val eegNotifyChar = gatt.getService(EEG_NOTIFY_SERVICE_UUID)?.getCharacteristic(EEG_NOTIFY_CHAR_UUID)
+                eegNotifyChar?.let { notifyChar ->
+                    gatt.setCharacteristicNotification(notifyChar, true)
+                    val descriptor = notifyChar.getDescriptor(UUID.fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                    descriptor?.let { desc ->
+                        desc.value = BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE
+                        gatt.writeDescriptor(desc)
+                        _isEegStarted.value = true
                     }
-                }, 200)
-            }
+                }
+            }, 200)
         }
     }
     
@@ -466,11 +459,6 @@ class BleManager(private val context: Context) {
                 gatt.setCharacteristicNotification(it, false)
                 _isEegStarted.value = false
                 eegNotificationEnabled.set(false) // 플래그 초기화
-            }
-            val eegWriteChar = gatt.getService(EEG_NOTIFY_SERVICE_UUID)?.getCharacteristic(EEG_WRITE_CHAR_UUID)
-            eegWriteChar?.let {
-                it.value = "stop".toByteArray()
-                gatt.writeCharacteristic(it)
             }
             // 센서 데이터 파서의 EEG 타임스탬프도 리셋
             sensorDataParser.resetEegTimestamp()
